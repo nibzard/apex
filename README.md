@@ -1,16 +1,15 @@
 # APEX - Adversarial Pair EXecution
 
-<div align="center">
-
-```
+<pre style="font-family: monospace; line-height: 1;">
  █████╗ ██████╗ ███████╗██╗  ██╗
 ██╔══██╗██╔══██╗██╔════╝╚██╗██╔╝
 ███████║██████╔╝█████╗   ╚███╔╝
 ██╔══██║██╔═══╝ ██╔══╝   ██╔██╗
 ██║  ██║██║     ███████╗██╔╝ ██╗
 ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝
-```
+</pre>
 
+<div align="center">
 **A CLI/TUI orchestration tool for adversarial pair coding with AI agents**
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
