@@ -24,6 +24,7 @@ class AgentRunner:
         mcp_config: Optional[Path] = None,
         lmdb_path: Optional[Path] = None,
     ) -> None:
+        """Initialize the runner with configuration and storage paths."""
         self.project_config = project_config
         self.session_id = str(uuid.uuid4())
 
@@ -155,11 +156,10 @@ class AgentRunner:
         if not parser:
             return []
 
-        # Read events from LMDB
-        events_key = f"/agents/{process_name}/messages"
+        # Placeholder for reading events from LMDB
         events = []
 
-        # This would need to be implemented in LMDB
+        # Actual LMDB retrieval would need to be implemented
         # For now, return empty list
         return events
 
