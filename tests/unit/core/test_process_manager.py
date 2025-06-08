@@ -38,4 +38,3 @@ def test_monitor_restart_on_failure():
     assert manager.restart_events.get("mon", 0) >= 1
     assert manager.health_check("mon") is True
     manager.shutdown()
-
