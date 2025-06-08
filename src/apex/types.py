@@ -1,13 +1,15 @@
 """Shared type definitions for APEX."""
 
-from enum import Enum
-from typing import Dict, List, Optional, Any
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
 class AgentType(str, Enum):
     """Types of APEX agents."""
+
     SUPERVISOR = "supervisor"
     CODER = "coder"
     ADVERSARY = "adversary"
@@ -15,6 +17,7 @@ class AgentType(str, Enum):
 
 class SessionState(str, Enum):
     """Session states."""
+
     INACTIVE = "inactive"
     STARTING = "starting"
     ACTIVE = "active"
@@ -25,6 +28,7 @@ class SessionState(str, Enum):
 
 class ProjectConfig(BaseModel):
     """Project configuration."""
+
     project_id: str
     name: str
     description: str
@@ -36,6 +40,7 @@ class ProjectConfig(BaseModel):
 
 class AgentState(BaseModel):
     """Agent state information."""
+
     agent_type: AgentType
     status: str
     started_at: Optional[datetime] = None
@@ -46,6 +51,7 @@ class AgentState(BaseModel):
 
 class TaskInfo(BaseModel):
     """Task information."""
+
     task_id: str
     description: str
     assigned_to: AgentType
@@ -58,6 +64,7 @@ class TaskInfo(BaseModel):
 
 class StreamEvent(BaseModel):
     """Stream event from Claude CLI."""
+
     type: str
     timestamp: datetime = Field(default_factory=datetime.now)
     session_id: str
@@ -67,6 +74,7 @@ class StreamEvent(BaseModel):
 
 class MCPToolCall(BaseModel):
     """MCP tool call information."""
+
     tool_id: str
     tool_name: str
     parameters: Dict[str, Any]

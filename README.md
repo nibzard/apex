@@ -185,7 +185,7 @@ APEX uses JSON configuration files for MCP servers:
       }
     },
     "git": {
-      "command": "python", 
+      "command": "python",
       "args": ["-m", "apex.mcp.git_server"],
       "env": {
         "GIT_REPO_PATH": "."
@@ -245,7 +245,7 @@ The interactive TUI provides real-time monitoring:
 APEX is in **active development** with the following components:
 
 - ✅ **Project Structure**: Complete source code organization
-- ✅ **Build System**: UV package management and dependencies  
+- ✅ **Build System**: UV package management and dependencies
 - ✅ **CLI Framework**: Basic command structure with Typer
 - ✅ **Testing Suite**: Pytest with coverage reporting
 - ✅ **Code Quality**: Pre-commit hooks with Black, Ruff, MyPy

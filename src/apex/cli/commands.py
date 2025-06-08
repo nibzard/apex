@@ -1,8 +1,9 @@
 """APEX CLI commands."""
 
-import typer
-from typing import Optional
 from pathlib import Path
+from typing import Optional
+
+import typer
 
 app = typer.Typer(
     name="apex",
@@ -14,7 +15,9 @@ app = typer.Typer(
 @app.command()
 def new(
     project_name: str = typer.Argument(..., help="Name of the new project"),
-    template: Optional[str] = typer.Option(None, "--template", "-t", help="Project template"),
+    template: Optional[str] = typer.Option(
+        None, "--template", "-t", help="Project template"
+    ),
     no_git: bool = typer.Option(False, "--no-git", help="Skip git initialization"),
     tech_stack: Optional[str] = typer.Option(None, "--tech", help="Technology stack"),
 ):
@@ -25,7 +28,9 @@ def new(
 
 @app.command()
 def init(
-    import_config: Optional[Path] = typer.Option(None, "--import", help="Import configuration file"),
+    import_config: Optional[Path] = typer.Option(
+        None, "--import", help="Import configuration file"
+    ),
 ):
     """Initialize APEX in existing project."""
     typer.echo("Initializing APEX...")
@@ -34,8 +39,12 @@ def init(
 
 @app.command()
 def start(
-    agents: Optional[str] = typer.Option(None, "--agents", help="Specific agents to start"),
-    continue_session: Optional[str] = typer.Option(None, "--continue", help="Continue from checkpoint"),
+    agents: Optional[str] = typer.Option(
+        None, "--agents", help="Specific agents to start"
+    ),
+    continue_session: Optional[str] = typer.Option(
+        None, "--continue", help="Continue from checkpoint"
+    ),
     task: Optional[str] = typer.Option(None, "--task", help="Initial task description"),
 ):
     """Start APEX agents."""
@@ -58,7 +67,7 @@ def status():
     """Show agent status."""
     typer.echo("Agent Status:")
     typer.echo("  Supervisor: ✓ Active")
-    typer.echo("  Coder: ✓ Active") 
+    typer.echo("  Coder: ✓ Active")
     typer.echo("  Adversary: ✓ Active")
     # TODO: Implement real status
 
@@ -67,6 +76,7 @@ def status():
 def version():
     """Show version information."""
     from apex import __version__
+
     typer.echo(f"APEX v{__version__}")
 
 

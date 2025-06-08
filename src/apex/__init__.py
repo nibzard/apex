@@ -8,11 +8,11 @@ __author__ = "APEX Team"
 __email__ = "wave@nibzard.com"
 
 from apex.config import Config
-from apex.types import AgentType, SessionState, ProjectConfig
+from apex.types import AgentType, ProjectConfig, SessionState
 
 __all__ = [
     "Config",
-    "AgentType", 
+    "AgentType",
     "SessionState",
     "ProjectConfig",
 ]

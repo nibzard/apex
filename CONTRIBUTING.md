@@ -136,26 +136,26 @@ import structlog
 logger = structlog.get_logger()
 
 async def process_agent_events(
-    agent_id: str, 
+    agent_id: str,
     events: List[Dict[str, Any]],
     timeout: Optional[float] = None
 ) -> Dict[str, Any]:
     """Process events from a specific agent.
-    
+
     Args:
         agent_id: Unique identifier for the agent
         events: List of event dictionaries to process
         timeout: Optional timeout in seconds
-        
+
     Returns:
         Dictionary containing processing results
-        
+
     Raises:
         ProcessingError: If event processing fails
         TimeoutError: If operation exceeds timeout
     """
     logger.info("Processing agent events", agent_id=agent_id, count=len(events))
-    
+
     try:
         # Implementation here
         pass
@@ -223,27 +223,27 @@ from apex.core.process_manager import ProcessManager
 
 class TestProcessManager:
     """Test suite for ProcessManager class."""
-    
+
     @pytest.fixture
     async def process_manager(self):
         """Create ProcessManager instance for testing."""
         return ProcessManager(project_id="test-project")
-    
+
     @pytest.mark.asyncio
     async def test_start_agent(self, process_manager):
         """Test agent process startup."""
         # Given
         agent_type = "coder"
         task = "Implement user authentication"
-        
+
         # When
         process = await process_manager.start_agent(agent_type, task)
-        
+
         # Then
         assert process is not None
         assert process.agent_type == agent_type
         assert agent_type in process_manager.processes
-    
+
     @pytest.mark.asyncio
     async def test_start_agent_failure(self, process_manager):
         """Test agent startup failure handling."""
@@ -259,13 +259,13 @@ Special considerations for testing MCP components:
 @pytest.mark.mcp
 class TestLMDBMCPServer:
     """Test LMDB MCP server compliance."""
-    
+
     @pytest.mark.asyncio
     async def test_tool_read_write(self, mcp_server):
         """Test basic read/write operations."""
         # Test MCP tool functionality
         pass
-    
+
     @pytest.mark.asyncio
     async def test_mcp_compliance(self, mcp_server):
         """Test MCP protocol compliance."""
@@ -434,7 +434,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         key = arguments["key"]
         value = await lmdb_read(key)
         return [TextContent(type="text", text=str(value))]
-    
+
     raise ValueError(f"Unknown tool: {name}")
 ```
 
@@ -465,7 +465,7 @@ We use semantic versioning (SemVer):
    ```bash
    git tag v1.0.0
    git push origin v1.0.0
-   
+
    # Create GitHub release
    gh release create v1.0.0 \
      --title "APEX v1.0.0" \
