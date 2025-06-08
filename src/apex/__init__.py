@@ -16,3 +16,23 @@ __all__ = [
     "SessionState",
     "ProjectConfig",
 ]
+from apex.core import (
+    ProcessManager,
+    StreamParser,
+    SystemEvent,
+    AssistantEvent,
+    ToolCallEvent,
+    LMDBMCP,
+)
+
+__all__.extend(
+    [
+        "ProcessManager",
+        "StreamParser",
+        "SystemEvent",
+        "AssistantEvent",
+        "ToolCallEvent",
+        "LMDBMCP",
+    ]
+)
+

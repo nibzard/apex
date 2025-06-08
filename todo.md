@@ -16,26 +16,26 @@ This roadmap derives from [`specs.md`](specs.md) and lists the concrete steps ne
 **Owner**: TBD | **Priority**: **hi** | **Dependencies**: None
 
 ### Process Management (src/apex/core/process_manager.py)
-- [ ] **ProcessManager class** - Core Claude CLI process orchestration
-  - [ ] Agent process lifecycle (start, stop, restart, health check)
-  - [ ] Process spawning with command construction (`claude -p` with MCP config)
+- [x] **ProcessManager class** - Core Claude CLI process orchestration
+  - [x] Agent process lifecycle (start, stop, restart, health check)
+  - [x] Process spawning with command construction (`claude -p` with MCP config)
   - [ ] Process monitoring and automatic restart on failure
-  - [ ] Resource monitoring (memory, CPU per process)
-  - [ ] Clean shutdown and cleanup procedures
+  - [x] Resource monitoring (memory, CPU per process)
+  - [x] Clean shutdown and cleanup procedures
 
 ### Stream Parser (src/apex/core/stream_parser.py)
-- [ ] **StreamParser class** - Real-time JSON parsing from Claude CLI
-  - [ ] Typed event classes (SystemEvent, AssistantEvent, ToolCallEvent)
-  - [ ] Streaming JSON line-by-line parsing with error handling
+- [x] **StreamParser class** - Real-time JSON parsing from Claude CLI
+  - [x] Typed event classes (SystemEvent, AssistantEvent, ToolCallEvent)
+  - [x] Streaming JSON line-by-line parsing with error handling
   - [ ] Event routing and storage in LMDB
   - [ ] Event filtering and pattern matching
   - [ ] Event replay system for session continuation
 
 ### LMDB MCP Server (src/apex/core/lmdb_mcp.py)
-- [ ] **LMDBMCP class** - MCP server for shared memory
-  - [ ] MCP tools: `mcp__lmdb__read`, `mcp__lmdb__write`, `mcp__lmdb__list`
+- [x] **LMDBMCP class** - MCP server for shared memory
+  - [x] MCP tools: `mcp__lmdb__read`, `mcp__lmdb__write`, `mcp__lmdb__list`
   - [ ] `mcp__lmdb__watch` for real-time change notifications
-  - [ ] `mcp__lmdb__delete`, `mcp__lmdb__transaction` tools
+  - [x] `mcp__lmdb__delete`, `mcp__lmdb__transaction` tools
   - [ ] Cursor operations for efficient range scanning
   - [ ] Transaction support for ACID compliance
   - [ ] Connection pooling and error handling
