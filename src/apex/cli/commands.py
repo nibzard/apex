@@ -11,6 +11,13 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+# Sub-command groups
+agent_app = typer.Typer(help="Agent management commands")
+memory_app = typer.Typer(help="Memory operations")
+
+app.add_typer(agent_app, name="agent")
+app.add_typer(memory_app, name="memory")
+
 
 @app.command()
 def new(
@@ -24,6 +31,19 @@ def new(
     """Create a new APEX project."""
     typer.echo(f"Creating new project: {project_name}")
     # TODO: Implement project creation
+
+
+@app.command()
+def list() -> None:
+    """List existing APEX projects."""
+    projects_dir = Path("projects")
+    if not projects_dir.exists():
+        typer.echo("No projects found.")
+        raise typer.Exit()
+
+    typer.echo("PROJECT")
+    for project in sorted(p for p in projects_dir.iterdir() if p.is_dir()):
+        typer.echo(project.name)
 
 
 @app.command()
@@ -53,13 +73,35 @@ def start(
 
 
 @app.command()
+def pause() -> None:
+    """Pause running agents."""
+    typer.echo("Pausing agents...")
+    # TODO: Implement pause logic
+
+
+@app.command()
+def resume() -> None:
+    """Resume paused agents."""
+    typer.echo("Resuming agents...")
+    # TODO: Implement resume logic
+
+
+@app.command()
+def stop() -> None:
+    """Stop all running agents."""
+    typer.echo("Stopping agents...")
+    # TODO: Implement stop logic
+
+
+@app.command()
 def tui(
     layout: Optional[str] = typer.Option("dashboard", "--layout", help="TUI layout"),
     theme: Optional[str] = typer.Option("dark", "--theme", help="Color theme"),
 ):
     """Launch TUI interface."""
-    typer.echo("Launching TUI...")
-    # TODO: Implement TUI
+    from apex.tui import DashboardApp
+
+    DashboardApp().run()
 
 
 @app.command()
@@ -78,6 +120,30 @@ def version():
     from apex import __version__
 
     typer.echo(f"APEX v{__version__}")
+
+
+@agent_app.command("list")
+def agent_list() -> None:
+    """Show agent status."""
+    for agent in ["Supervisor", "Coder", "Adversary"]:
+        typer.echo(f"{agent}: inactive")
+
+
+@agent_app.command("restart")
+def agent_restart(agent_name: str) -> None:
+    """Restart agent process."""
+    typer.echo(f"Restarting {agent_name}...")
+    # TODO: Implement restart logic
+
+
+@memory_app.command("show")
+def memory_show(key: Optional[str] = None) -> None:
+    """Display memory contents."""
+    if key is None:
+        typer.echo("Showing memory root")
+    else:
+        typer.echo(f"Showing memory key: {key}")
+    # TODO: Implement memory retrieval
 
 
 def main():

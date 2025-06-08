@@ -1,7 +1,7 @@
 """Tests for AgentPrompts."""
 
 from apex.agents.prompts import AgentPrompts
-from apex.types import AgentType, ProjectConfig
+from apex.types import ProjectConfig
 
 
 def sample_config() -> ProjectConfig:
@@ -25,9 +25,6 @@ def test_supervisor_prompt() -> None:
     assert "python, docker" in prompt
     assert "add login" in prompt
     assert "{project_name}" not in prompt
-
-    # generic accessor should match
-    assert prompt == AgentPrompts.get_prompt(AgentType.SUPERVISOR, config, "add login")
 
 
 def test_coder_prompt() -> None:

@@ -15,6 +15,14 @@ from apex.agents import (
     mcp_apex_sample,
 )
 from apex.config import Config
+from apex.orchestration import (
+    ContinuationManager,
+    EventBus,
+    OrchestrationEngine,
+    Session,
+    SessionManager,
+    StateStore,
+)
 from apex.types import AgentType, ProjectConfig, SessionState
 
 __all__ = [
@@ -27,4 +35,29 @@ __all__ = [
     "AgentLifecycle",
     "mcp_apex_progress",
     "mcp_apex_sample",
+    "SessionManager",
+    "Session",
+    "ContinuationManager",
+    "OrchestrationEngine",
+    "StateStore",
+    "EventBus",
 ]
+from apex.core import (
+    LMDBMCP,
+    AssistantEvent,
+    ProcessManager,
+    StreamParser,
+    SystemEvent,
+    ToolCallEvent,
+)
+
+__all__.extend(
+    [
+        "ProcessManager",
+        "StreamParser",
+        "SystemEvent",
+        "AssistantEvent",
+        "ToolCallEvent",
+        "LMDBMCP",
+    ]
+)
