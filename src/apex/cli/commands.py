@@ -27,8 +27,36 @@ console = Console()
 _current_runner: Optional[AgentRunner] = None
 
 # Sub-command groups
+
 agent_app = typer.Typer(help="Agent management commands")
 memory_app = typer.Typer(help="Memory operations")
+
+# Option defaults
+TEMPLATE_OPTION = typer.Option(None, "--template", "-t", help="Project template")
+NO_GIT_OPTION = typer.Option(False, "--no-git", help="Skip git initialization")
+TECH_STACK_OPTION = typer.Option(None, "--tech", help="Technology stack")
+IMPORT_CONFIG_OPTION = typer.Option(
+    None,
+    "--import",
+    help="Import configuration file",
+)
+AGENTS_OPTION = typer.Option(
+    None,
+    "--agents",
+    help="Specific agents to start",
+)
+CONTINUE_SESSION_OPTION = typer.Option(
+    None,
+    "--continue",
+    help="Continue from checkpoint",
+)
+TASK_OPTION = typer.Option(
+    None,
+    "--task",
+    help="Initial task description",
+)
+LAYOUT_OPTION = typer.Option("dashboard", "--layout", help="TUI layout")
+THEME_OPTION = typer.Option("dark", "--theme", help="Color theme")
 
 app.add_typer(agent_app, name="agent")
 app.add_typer(memory_app, name="memory")
@@ -72,7 +100,10 @@ async def _get_or_create_runner() -> Optional[AgentRunner]:
     config = _load_project_config()
     if not config:
         console.print(
-            "[red]No APEX project found in current directory. Run 'apex init' first.[/red]"
+            (
+                "[red]No APEX project found in current directory. "
+                "Run 'apex init' first.[/red]"
+            )
         )
         return None
 
@@ -82,25 +113,23 @@ async def _get_or_create_runner() -> Optional[AgentRunner]:
 
 
 def _run_async(coro):
-    """Helper to run async functions in CLI commands."""
+    """Run async functions in CLI commands."""
     try:
         return asyncio.run(coro)
     except KeyboardInterrupt:
         console.print("\n[yellow]Operation cancelled by user[/yellow]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @app.command()
 def new(
     project_name: str = typer.Argument(..., help="Name of the new project"),
-    template: Optional[str] = typer.Option(
-        None, "--template", "-t", help="Project template"
-    ),
-    no_git: bool = typer.Option(False, "--no-git", help="Skip git initialization"),
-    tech_stack: Optional[str] = typer.Option(None, "--tech", help="Technology stack"),
+    template: Optional[str] = TEMPLATE_OPTION,
+    no_git: bool = NO_GIT_OPTION,
+    tech_stack: Optional[str] = TECH_STACK_OPTION,
 ):
     """Create a new APEX project."""
     console.print(f"[bold blue]Creating new APEX project: {project_name}[/bold blue]")
@@ -199,9 +228,7 @@ def list() -> None:
 
 @app.command()
 def init(
-    import_config: Optional[Path] = typer.Option(
-        None, "--import", help="Import configuration file"
-    ),
+    import_config: Optional[Path] = IMPORT_CONFIG_OPTION,
 ):
     """Initialize APEX in existing project."""
     console.print("[bold blue]Initializing APEX in current directory[/bold blue]")
@@ -223,7 +250,7 @@ def init(
             )
         except Exception as e:
             console.print(f"[red]Error importing config: {e}[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
     else:
         # Interactive initialization
         project_name = typer.prompt("Project name", default=Path.cwd().name)
@@ -261,13 +288,9 @@ def init(
 
 @app.command()
 def start(
-    agents: Optional[str] = typer.Option(
-        None, "--agents", help="Specific agents to start"
-    ),
-    continue_session: Optional[str] = typer.Option(
-        None, "--continue", help="Continue from checkpoint"
-    ),
-    task: Optional[str] = typer.Option(None, "--task", help="Initial task description"),
+    agents: Optional[str] = AGENTS_OPTION,
+    continue_session: Optional[str] = CONTINUE_SESSION_OPTION,
+    task: Optional[str] = TASK_OPTION,
 ):
     """Start APEX agents."""
 
@@ -364,8 +387,8 @@ def stop() -> None:
 
 @app.command()
 def tui(
-    layout: Optional[str] = typer.Option("dashboard", "--layout", help="TUI layout"),
-    theme: Optional[str] = typer.Option("dark", "--theme", help="Color theme"),
+    layout: Optional[str] = LAYOUT_OPTION,
+    theme: Optional[str] = THEME_OPTION,
 ):
     """Launch TUI interface."""
     from apex.tui import DashboardApp
@@ -483,5 +506,5 @@ def memory_show(key: Optional[str] = None) -> None:
 
 
 def main():
-    """Main entry point for CLI."""
+    """Run the command line interface."""
     app()
