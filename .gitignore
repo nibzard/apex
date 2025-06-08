@@ -202,7 +202,7 @@ test_data/
 *.lmdb
 *.lmdb-lock
 
-# Large documentation files  
+# Large documentation files
 llmstxt/mcp.txt
 
 # Development artifacts

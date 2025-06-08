@@ -45,7 +45,9 @@ class SessionManager:
         unpacked = msgpack.unpackb(data, raw=False)
         return Session.model_validate(unpacked)
 
-    def create(self, config: ProjectConfig, metadata: Optional[Dict[str, Any]] = None) -> Session:
+    def create(
+        self, config: ProjectConfig, metadata: Optional[Dict[str, Any]] = None
+    ) -> Session:
         """Create and persist a new session."""
         session = Session(config=config, metadata=metadata or {})
         with self.env.begin(write=True, db=self.db) as txn:
@@ -78,4 +80,3 @@ class SessionManager:
         """Delete a session."""
         with self.env.begin(write=True, db=self.db) as txn:
             return txn.delete(session_id.encode())
-
