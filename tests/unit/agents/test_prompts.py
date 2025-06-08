@@ -8,6 +8,7 @@ class TestAgentPrompts:
     """Agent prompt generation tests."""
 
     def test_generate_supervisor_prompt(self):
+        """Check that the supervisor prompt includes key info."""
         config = ProjectConfig(
             project_id="1",
             name="TestProj",
@@ -17,7 +18,9 @@ class TestAgentPrompts:
             features=[],
         )
         prompt = AgentPrompts.get_prompt(
-            AgentType.SUPERVISOR, config, "Do the thing"
+            AgentType.SUPERVISOR,
+            config,
+            "Do the thing",
         )
         assert "Supervisor agent" in prompt
         assert "TestProj" in prompt

@@ -7,8 +7,6 @@ __version__ = "1.0.0"
 __author__ = "APEX Team"
 __email__ = "wave@nibzard.com"
 
-from apex.config import Config
-from apex.types import AgentType, ProjectConfig, SessionState
 from apex.agents import (
     AgentCoordinator,
     AgentLifecycle,
@@ -16,6 +14,8 @@ from apex.agents import (
     mcp_apex_progress,
     mcp_apex_sample,
 )
+from apex.config import Config
+from apex.types import AgentType, ProjectConfig, SessionState
 
 __all__ = [
     "Config",

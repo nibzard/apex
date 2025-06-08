@@ -13,6 +13,7 @@ class AgentLifecycle:
     """Manage agent startup, shutdown and health."""
 
     def __init__(self, config: Config | None = None) -> None:
+        """Create lifecycle manager with optional config."""
         self.config = config or Config.get_default()
         self.states: Dict[AgentType, AgentState] = {}
 

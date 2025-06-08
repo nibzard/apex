@@ -8,6 +8,7 @@ class TestAgentCoordinator:
     """Coordinator behavior tests."""
 
     def test_assign_and_complete_task(self):
+        """Ensure tasks can be assigned and completed."""
         coordinator = AgentCoordinator()
         task = coordinator.assign_task("Implement feature", AgentType.CODER)
         tasks = coordinator.get_tasks_for_agent(AgentType.CODER)

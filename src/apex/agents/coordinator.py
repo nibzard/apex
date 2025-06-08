@@ -13,6 +13,7 @@ class AgentCoordinator:
     """Simple in-memory agent coordinator."""
 
     def __init__(self) -> None:
+        """Initialize coordinator with empty task stores."""
         self._tasks: Dict[str, TaskInfo] = {}
         self._agent_tasks: Dict[AgentType, List[str]] = defaultdict(list)
 

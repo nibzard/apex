@@ -1,8 +1,8 @@
 """Agent system modules for APEX."""
 
-from .prompts import AgentPrompts
 from .coordinator import AgentCoordinator
 from .lifecycle import AgentLifecycle
+from .prompts import AgentPrompts
 from .tools import mcp_apex_progress, mcp_apex_sample
 
 __all__ = [
