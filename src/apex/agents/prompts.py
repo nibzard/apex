@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from apex.types import ProjectConfig
+
+if TYPE_CHECKING:
+    from apex.types import AgentType
 
 
 class AgentPrompts:
@@ -136,8 +141,6 @@ Focus on:
             Generated prompt string
 
         """
-        from apex.types import AgentType
-
         if agent_type == AgentType.SUPERVISOR:
             return cls.supervisor_prompt(config, user_request)
         elif agent_type == AgentType.CODER:
