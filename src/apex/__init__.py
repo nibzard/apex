@@ -7,22 +7,34 @@ __version__ = "1.0.0"
 __author__ = "APEX Team"
 __email__ = "wave@nibzard.com"
 
-from apex.config import Config
-from apex.types import AgentType, ProjectConfig, SessionState
-from apex.orchestration import (
-    SessionManager,
-    Session,
-    ContinuationManager,
-    OrchestrationEngine,
-    StateStore,
-    EventBus,
+from apex.agents import (
+    AgentCoordinator,
+    AgentLifecycle,
+    AgentPrompts,
+    mcp_apex_progress,
+    mcp_apex_sample,
 )
+from apex.config import Config
+from apex.orchestration import (
+    ContinuationManager,
+    EventBus,
+    OrchestrationEngine,
+    Session,
+    SessionManager,
+    StateStore,
+)
+from apex.types import AgentType, ProjectConfig, SessionState
 
 __all__ = [
     "Config",
     "AgentType",
     "SessionState",
     "ProjectConfig",
+    "AgentPrompts",
+    "AgentCoordinator",
+    "AgentLifecycle",
+    "mcp_apex_progress",
+    "mcp_apex_sample",
     "SessionManager",
     "Session",
     "ContinuationManager",
@@ -31,12 +43,12 @@ __all__ = [
     "EventBus",
 ]
 from apex.core import (
+    LMDBMCP,
+    AssistantEvent,
     ProcessManager,
     StreamParser,
     SystemEvent,
-    AssistantEvent,
     ToolCallEvent,
-    LMDBMCP,
 )
 
 __all__.extend(
@@ -49,4 +61,3 @@ __all__.extend(
         "LMDBMCP",
     ]
 )
-

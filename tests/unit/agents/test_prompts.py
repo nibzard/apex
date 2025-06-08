@@ -1,8 +1,11 @@
+"""Tests for AgentPrompts."""
+
 from apex.agents.prompts import AgentPrompts
 from apex.types import ProjectConfig
 
 
 def sample_config() -> ProjectConfig:
+    """Return a sample project configuration for tests."""
     return ProjectConfig(
         project_id="p1",
         name="Demo",
@@ -14,6 +17,7 @@ def sample_config() -> ProjectConfig:
 
 
 def test_supervisor_prompt() -> None:
+    """Supervisor prompt should include config details and request."""
     config = sample_config()
     prompt = AgentPrompts.supervisor_prompt(config, "add login")
     assert config.name in prompt
@@ -24,6 +28,7 @@ def test_supervisor_prompt() -> None:
 
 
 def test_coder_prompt() -> None:
+    """Coder prompt should include the project name."""
     config = sample_config()
     prompt = AgentPrompts.coder_prompt(config)
     assert config.name in prompt
@@ -31,8 +36,8 @@ def test_coder_prompt() -> None:
 
 
 def test_adversary_prompt() -> None:
+    """Adversary prompt should include the project name."""
     config = sample_config()
     prompt = AgentPrompts.adversary_prompt(config)
     assert config.name in prompt
     assert "{project_name}" not in prompt
-
