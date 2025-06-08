@@ -19,3 +19,23 @@ def test_process_lifecycle():
     time.sleep(0.1)
     assert manager.health_check("test") is False
     manager.shutdown()
+
+
+def test_monitor_restart_on_failure():
+    manager = ProcessManager()
+    cmd = [sys.executable, "-c", "import time; time.sleep(5)"]
+    manager.spawn("mon", cmd)
+    manager.monitor(start=True, interval=0.05)
+    time.sleep(0.1)
+
+    proc = manager.processes["mon"].process
+    proc.kill()
+    proc.wait()
+
+    time.sleep(0.2)
+    manager.monitor(start=False)
+
+    assert manager.restart_events.get("mon", 0) >= 1
+    assert manager.health_check("mon") is True
+    manager.shutdown()
+
