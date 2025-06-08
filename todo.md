@@ -18,8 +18,8 @@ This roadmap derives from [`specs.md`](specs.md) and lists the concrete steps ne
 ### Process Management (src/apex/core/process_manager.py)
 - [x] **ProcessManager class** - Core Claude CLI process orchestration
   - [x] Agent process lifecycle (start, stop, restart, health check)
-  - [x] Process spawning with command construction (`claude -p` with MCP config)
-  - [ ] Process monitoring and automatic restart on failure
+  - [~] Process spawning with command construction (`claude -p` with MCP config) - **NEEDS REAL CLAUDE CLI INTEGRATION**
+  - [x] Process monitoring and automatic restart on failure
   - [x] Resource monitoring (memory, CPU per process)
   - [x] Clean shutdown and cleanup procedures
 
@@ -27,18 +27,19 @@ This roadmap derives from [`specs.md`](specs.md) and lists the concrete steps ne
 - [x] **StreamParser class** - Real-time JSON parsing from Claude CLI
   - [x] Typed event classes (SystemEvent, AssistantEvent, ToolCallEvent)
   - [x] Streaming JSON line-by-line parsing with error handling
-  - [ ] Event routing and storage in LMDB
-  - [ ] Event filtering and pattern matching
+  - [~] Event routing and storage in LMDB - **PARTIALLY IMPLEMENTED**
+  - [x] Event filtering and pattern matching
   - [ ] Event replay system for session continuation
 
 ### LMDB MCP Server (src/apex/core/lmdb_mcp.py)
-- [x] **LMDBMCP class** - MCP server for shared memory
+- [~] **LMDBMCP class** - MCP server for shared memory - **NEEDS REAL MCP SERVER IMPLEMENTATION**
   - [x] MCP tools: `mcp__lmdb__read`, `mcp__lmdb__write`, `mcp__lmdb__list`
   - [ ] `mcp__lmdb__watch` for real-time change notifications
   - [x] `mcp__lmdb__delete`, `mcp__lmdb__transaction` tools
   - [ ] Cursor operations for efficient range scanning
   - [ ] Transaction support for ACID compliance
   - [ ] Connection pooling and error handling
+  - [ ] **CRITICAL**: Convert to actual MCP server with stdio transport
 
 ### Memory Management (src/apex/core/memory.py)
 - [ ] **Memory structure schema** - LMDB organization
@@ -53,33 +54,33 @@ This roadmap derives from [`specs.md`](specs.md) and lists the concrete steps ne
 **Owner**: TBD | **Priority**: **hi** | **Dependencies**: Team Alpha (LMDB MCP)
 
 ### Agent Prompts (src/apex/agents/prompts.py)
-- [ ] **AgentPrompts class** - Dynamic prompt generation
-  - [ ] Supervisor agent prompt (task coordination, git operations)
-  - [ ] Coder agent prompt (implementation, code writing)
-  - [ ] Adversary agent prompt (testing, security, quality)
-  - [ ] Dynamic prompt generation based on project config
-  - [ ] Prompt versioning and templates
+- [x] **AgentPrompts class** - Dynamic prompt generation
+  - [x] Supervisor agent prompt (task coordination, git operations)
+  - [x] Coder agent prompt (implementation, code writing)
+  - [x] Adversary agent prompt (testing, security, quality)
+  - [x] Dynamic prompt generation based on project config
+  - [x] Prompt versioning and templates
 
 ### Agent Coordinator (src/apex/agents/coordinator.py)
-- [ ] **AgentCoordinator class** - Inter-agent communication
-  - [ ] Task assignment and distribution logic
-  - [ ] Conflict resolution between agents
-  - [ ] Progress tracking and reporting
-  - [ ] Agent priority and scheduling system
+- [x] **AgentCoordinator class** - Inter-agent communication
+  - [x] Task assignment and distribution logic
+  - [x] Conflict resolution between agents
+  - [x] Progress tracking and reporting
+  - [x] Agent priority and scheduling system
 
 ### MCP Tools (src/apex/agents/tools.py)
-- [ ] **Agent-specific MCP tools**
+- [ ] **Agent-specific MCP tools** - **FILE MISSING**
   - [ ] Progress reporting (`mcp__apex__progress`)
   - [ ] Decision sampling (`mcp__apex__sample`)
   - [ ] Task management tools
   - [ ] Agent communication tools
 
 ### Agent Lifecycle (src/apex/agents/lifecycle.py)
-- [ ] **Lifecycle management**
-  - [ ] Agent startup/shutdown procedures
-  - [ ] Health monitoring and status tracking
-  - [ ] Failover and recovery mechanisms
-  - [ ] Configuration hot-reloading
+- [x] **Lifecycle management**
+  - [x] Agent startup/shutdown procedures
+  - [x] Health monitoring and status tracking
+  - [x] Failover and recovery mechanisms
+  - [x] Configuration hot-reloading
 
 ---
 
@@ -87,37 +88,37 @@ This roadmap derives from [`specs.md`](specs.md) and lists the concrete steps ne
 **Owner**: TBD | **Priority**: **mid** | **Dependencies**: Team Alpha, Team Beta
 
 ### Session Management (src/apex/orchestration/session.py)
-- [ ] **SessionManager class** - Session lifecycle
-  - [ ] Session creation, tracking, cleanup
-  - [ ] Session metadata and configuration
-  - [ ] Session sharing and collaboration
-  - [ ] Session templates and presets
+- [x] **SessionManager class** - Session lifecycle
+  - [x] Session creation, tracking, cleanup
+  - [x] Session metadata and configuration
+  - [x] Session sharing and collaboration
+  - [x] Session templates and presets
 
 ### Continuation System (src/apex/orchestration/continuation.py)
-- [ ] **ContinuationManager class** - Pause/resume functionality
-  - [ ] Comprehensive checkpoint system
-  - [ ] State serialization/deserialization
-  - [ ] Incremental checkpoints for efficiency
-  - [ ] Checkpoint validation and integrity
+- [x] **ContinuationManager class** - Pause/resume functionality
+  - [x] Comprehensive checkpoint system
+  - [x] State serialization/deserialization
+  - [x] Incremental checkpoints for efficiency
+  - [x] Checkpoint validation and integrity
 
 ### Orchestration Engine (src/apex/orchestration/engine.py)
-- [ ] **OrchestrationEngine class** - Main workflow control
-  - [ ] Workflow definition and execution
-  - [ ] Task scheduling and dependency management
-  - [ ] Load balancing across agents
-  - [ ] Error recovery and retry mechanisms
+- [x] **OrchestrationEngine class** - Main workflow control
+  - [x] Workflow definition and execution
+  - [x] Task scheduling and dependency management
+  - [x] Load balancing across agents
+  - [x] Error recovery and retry mechanisms
 
 ### State Management (src/apex/orchestration/state.py)
-- [ ] **State persistence** - LMDB backend state management
+- [~] **State persistence** - LMDB backend state management - **NEEDS RUNTIME INTEGRATION**
   - [ ] State versioning and migration
   - [ ] State backup and recovery
   - [ ] State synchronization across processes
 
 ### Event Processing (src/apex/orchestration/events.py)
-- [ ] **Event system** - Event bus and processing
-  - [ ] Event publishing and routing
-  - [ ] Event persistence and replay
-  - [ ] Event-driven workflows
+- [x] **Event system** - Event bus and processing
+  - [x] Event publishing and routing
+  - [x] Event persistence and replay
+  - [x] Event-driven workflows
 
 ---
 
@@ -125,24 +126,24 @@ This roadmap derives from [`specs.md`](specs.md) and lists the concrete steps ne
 **Owner**: TBD | **Priority**: **mid** | **Dependencies**: Team Alpha, Team Beta
 
 ### CLI Commands Enhancement (src/apex/cli/commands.py)
-- [ ] **Project Management**
+- [~] **Project Management** - **STUBS ONLY, NEED IMPLEMENTATION**
   - [ ] `apex new` - Interactive project setup wizard with templates
   - [ ] `apex init` - Initialize APEX in existing project
   - [ ] `apex list` - List projects with status display
 
-- [ ] **Session Control**
+- [~] **Session Control** - **STUBS ONLY, NEED IMPLEMENTATION**
   - [ ] `apex start` - Start agents with selection and task options
   - [ ] `apex pause` - Pause with checkpoint creation
   - [ ] `apex resume` - Resume from checkpoint with state restoration
   - [ ] `apex stop` - Graceful shutdown
 
-- [ ] **Agent Management**
+- [~] **Agent Management** - **STUBS ONLY, NEED IMPLEMENTATION**
   - [ ] `apex agent list` - Show detailed agent status
   - [ ] `apex agent logs` - Stream logs with filtering
   - [ ] `apex agent restart` - Restart with state preservation
   - [ ] `apex agent prompt` - View/edit agent prompts
 
-- [ ] **Memory Operations**
+- [~] **Memory Operations** - **STUBS ONLY, NEED IMPLEMENTATION**
   - [ ] `apex memory show` - Display memory with formats (json/yaml/table)
   - [ ] `apex memory query` - Query with pattern matching
   - [ ] `apex memory export/import` - Snapshot management
@@ -193,53 +194,27 @@ This roadmap derives from [`specs.md`](specs.md) and lists the concrete steps ne
 
 ---
 
-## 🔧 Team Epsilon: Version Control Integration
-**Owner**: TBD | **Priority**: **lo** | **Dependencies**: Team Alpha, Team Beta
-
-### Git Operations (src/apex/vcs/git_ops.py)
-- [ ] **Git wrapper implementation**
-  - [ ] Git operations wrapper
-  - [ ] Intelligent commit message generation
-  - [ ] Branch management and strategy
-  - [ ] Merge conflict resolution assistance
-
-### GitHub Integration (src/apex/vcs/github_client.py)
-- [ ] **GitHub API integration**
-  - [ ] Pull request automation
-  - [ ] Issue tracking and management
-  - [ ] Release automation
-  - [ ] GitHub Actions integration
-
-### Auto-commit System (src/apex/vcs/auto_commit.py)
-- [ ] **Intelligent auto-commit**
-  - [ ] Auto-commit logic and triggers
-  - [ ] Commit message templates
-  - [ ] Commit validation and testing
-  - [ ] Commit rollback and recovery
-
----
-
 ## 🧪 Testing & Quality
 **Owner**: TBD | **Priority**: **hi** | **Dependencies**: All teams
 
 ### Unit Tests
-- [ ] **Core Infrastructure Tests (tests/unit/core/)**
-  - [ ] Process management functionality
-  - [ ] Stream parsing and event handling
-  - [ ] LMDB operations and MCP compliance
+- [x] **Core Infrastructure Tests (tests/unit/core/)**
+  - [x] Process management functionality
+  - [x] Stream parsing and event handling
+  - [x] LMDB operations and MCP compliance
   - [ ] Memory management and persistence
 
-- [ ] **Agent System Tests (tests/unit/agents/)**
-  - [ ] Agent prompt generation
-  - [ ] Agent coordination and communication
-  - [ ] Agent lifecycle management
-  - [ ] MCP tool functionality
+- [x] **Agent System Tests (tests/unit/agents/)**
+  - [x] Agent prompt generation
+  - [x] Agent coordination and communication
+  - [x] Agent lifecycle management
+  - [ ] MCP tool functionality - **MISSING TOOLS FILE**
 
-- [ ] **Orchestration Tests (tests/unit/orchestration/)**
-  - [ ] Session management
-  - [ ] Continuation system
-  - [ ] State persistence
-  - [ ] Event processing
+- [x] **Orchestration Tests (tests/unit/orchestration/)**
+  - [x] Session management
+  - [x] Continuation system
+  - [x] State persistence
+  - [x] Event processing
 
 ### Integration Tests
 - [ ] **End-to-End Workflows (tests/integration/)**
@@ -324,6 +299,45 @@ This roadmap derives from [`specs.md`](specs.md) and lists the concrete steps ne
 3. **Advanced Analytics** - Insights and optimization
 4. **Compliance Features** - Audit, data protection
 5. **Scalability** - Distributed execution, clustering
+
+---
+
+## 🚨 CRITICAL IMPLEMENTATION GAPS
+
+### **Phase 1 - BLOCKING ISSUES (Must Fix First)**
+1. **[CRITICAL] Real MCP Server Implementation** - Current LMDBMCP is just a class, not an MCP server
+   - Convert to actual MCP server with stdio transport
+   - Implement missing tools: `mcp__lmdb__watch`, `mcp__lmdb__cursor_scan`, `mcp__lmdb__transaction`
+   - Add MCP protocol compliance
+
+2. **[CRITICAL] Claude CLI Integration** - ProcessManager doesn't spawn real Claude CLI processes
+   - Update to spawn `claude -p <prompt> --output-format stream-json --mcp-config <config>`
+   - Connect StreamParser to actual Claude CLI stdout
+   - Implement agent prompt injection
+
+3. **[CRITICAL] End-to-End Workflow** - No actual agent communication
+   - Implement Supervisor → Coder task assignment via LMDB
+   - Add real-time event routing from agents to LMDB
+   - Create basic task execution loop
+
+4. **[HIGH] CLI Functionality** - All commands are non-functional stubs
+   - Implement `apex new` project setup
+   - Make `apex start` actually spawn agents
+   - Add `apex status` for monitoring
+
+5. **[HIGH] Missing Agent Tools** - File `src/apex/agents/tools.py` doesn't exist
+   - Create agent-specific MCP tools for progress reporting
+   - Add decision sampling tools
+   - Implement task management tools
+
+### **Current Status Summary**
+- ✅ **Architecture & Types**: Excellent foundation with comprehensive tests
+- ✅ **Core Components**: Process manager, stream parser, sessions all implemented
+- 🔴 **Runtime Integration**: No actual Claude CLI spawning or MCP server
+- 🔴 **Agent Communication**: Components exist but not connected
+- 🔴 **User Interface**: CLI commands are stubs only
+
+**Next Priority**: Focus on making the MCP server functional and connecting Claude CLI processes.
 
 ---
 

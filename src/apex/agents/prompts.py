@@ -121,5 +121,31 @@ Focus on:
         """Generate Adversary prompt."""
         return cls.ADVERSARY_TEMPLATE.format(project_name=config.name)
 
+    @classmethod
+    def generate_prompt(
+        cls, agent_type: "AgentType", config: ProjectConfig, user_request: str = ""
+    ) -> str:
+        """Generate prompt for any agent type.
+
+        Args:
+            agent_type: Type of agent
+            config: Project configuration
+            user_request: Optional user request (used for supervisor)
+
+        Returns:
+            Generated prompt string
+
+        """
+        from apex.types import AgentType
+
+        if agent_type == AgentType.SUPERVISOR:
+            return cls.supervisor_prompt(config, user_request)
+        elif agent_type == AgentType.CODER:
+            return cls.coder_prompt(config)
+        elif agent_type == AgentType.ADVERSARY:
+            return cls.adversary_prompt(config)
+        else:
+            raise ValueError(f"Unknown agent type: {agent_type}")
+
 
 __all__ = ["AgentPrompts"]

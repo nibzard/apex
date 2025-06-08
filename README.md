@@ -17,7 +17,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io/)
 [![Claude Code](https://img.shields.io/badge/Claude-Code-purple.svg)](https://claude.ai/code)
-[![Development Status](https://img.shields.io/badge/status-pre--alpha-orange.svg)](https://github.com/nibzard/apex)
+[![Development Status](https://img.shields.io/badge/status-alpha-yellow.svg)](https://github.com/nibzard/apex)
 
 </div>
 
@@ -37,35 +37,103 @@ APEX orchestrates multiple Claude CLI processes working in an adversarial manner
 
 ## Quick Start
 
+### Prerequisites
+
+Before installing APEX, ensure you have:
+
+- **Python 3.11+** installed
+- **UV package manager** ([install guide](https://github.com/astral-sh/uv))
+- **Claude CLI** installed and configured ([setup guide](https://claude.ai/code))
+- **Git** for version control
+
 ### Installation
 
 ```bash
-# Clone from source (currently pre-release)
+# Clone the repository
 git clone https://github.com/nibzard/apex
 cd apex
-uv sync && uv pip install -e ".[dev]"
 
-# Run development setup
-PYTHONPATH=./src uv run python scripts/setup_dev.py
+# Install dependencies and setup development environment
+uv sync
+uv pip install -e ".[dev]"
 ```
 
-### Basic Usage
+### Quick Demo
 
 ```bash
-# Run CLI (development mode)
-./scripts/dev.sh cli --help
+# Create a new project
+uv run apex new my-calculator --tech "Python" --no-git
 
-# Show version
-./scripts/dev.sh cli version
+# Enter the project directory
+cd my-calculator
 
-# Run tests
-./scripts/dev.sh test
+# Start APEX with a task
+uv run apex start --task "Create a simple calculator with add, subtract, multiply, and divide functions"
 
-# Format and lint code
-./scripts/dev.sh lint
+# Monitor progress
+uv run apex status
+
+# View the TUI dashboard (coming soon)
+uv run apex tui
 ```
 
-> **Note**: APEX is currently in active development. The CLI commands above show the basic structure, but full functionality is still being implemented according to the [detailed specifications](specs.md).
+### Core Commands
+
+```bash
+# Project management
+uv run apex new <project>           # Create new project
+uv run apex init                    # Initialize existing project
+uv run apex list                    # List projects
+
+# Session control
+uv run apex start                   # Start agents
+uv run apex start --task "..."      # Start with specific task
+uv run apex status                  # Show agent status
+uv run apex stop                    # Stop all agents
+
+# Version and help
+uv run apex version                 # Show version
+uv run apex --help                  # Show help
+```
+
+## What's Working Now
+
+APEX is in **Alpha** state with core functionality available:
+
+### ✅ **Ready to Use**
+- **Project creation**: `apex new` and `apex init` commands work
+- **Task workflows**: `apex start --task` creates and tracks multi-agent workflows
+- **Status monitoring**: `apex status` shows real-time agent and task information
+- **LMDB persistence**: All workflow state is saved and queryable
+- **MCP integration**: Complete MCP server with LMDB backend
+
+### 🔧 **Functional but Basic**
+- **Agent orchestration**: Supervisor creates tasks, assigns to Coder/Adversary
+- **Process management**: Can spawn Claude CLI processes (requires Claude CLI setup)
+- **Stream parsing**: Captures and stores agent communication events
+
+### 🚧 **In Development**
+- **TUI interface**: Basic structure exists, full interactivity coming soon
+- **Session continuity**: Pause/resume functionality planned
+- **Git integration**: Automatic commits and branch management
+
+### 📋 **Try It Out**
+```bash
+# Quick test (no Claude CLI required for basic workflow demo)
+git clone https://github.com/nibzard/apex && cd apex
+uv sync && uv pip install -e ".[dev]"
+
+# Test basic commands
+uv run apex version
+uv run apex --help
+
+# Create test config and try workflow
+echo '{"project_id":"test-123","name":"test-project","description":"Test project","tech_stack":["Python"],"project_type":"CLI Tool","features":["testing"],"created_at":"2025-01-08T12:00:00"}' > test-config.json
+mkdir test-project && cd test-project
+uv run apex init --import ../test-config.json
+uv run apex start --task "Create a simple hello world program"
+uv run apex status
+```
 
 ## Architecture
 
@@ -135,44 +203,79 @@ APEX provides seamless pause/resume capabilities:
 - **Event Replay**: Restore agent context and conversation history
 - **Process Recovery**: Automatic restart with full state restoration
 
-## Commands
+## Commands Reference
 
 ### Project Management
 ```bash
-apex new <project>              # Create new project
-apex init                       # Initialize in existing directory
-apex list                       # List all projects
+apex new <project>              # Create new project with interactive setup
+  --template <name>             # Use project template
+  --tech <stack>                # Specify technology stack
+  --no-git                      # Skip git initialization
+
+apex init                       # Initialize APEX in existing directory
+  --import <config.json>        # Import existing configuration
+
+apex list                       # List all APEX projects
 ```
 
 ### Session Control
 ```bash
-apex start                      # Start all agents
+apex start                      # Start all agents in monitoring mode
+  --task "<description>"        # Start with specific task/workflow
+  --agents <list>               # Start only specified agents
+
+apex status                     # Show detailed agent and task status
+apex stop                       # Stop all running agents
+
+# Future commands (planned)
 apex pause                      # Pause with checkpoint
 apex resume <checkpoint>        # Resume from checkpoint
-apex stop                       # Stop all agents
 ```
 
-### Monitoring
+### Development & Monitoring
 ```bash
+apex version                    # Show version information
+
+# Future commands (planned)
 apex tui                        # Interactive dashboard
-apex status                     # Agent status summary
-apex logs <agent>              # View agent logs
-apex metrics                    # Performance metrics
+apex agent list                 # List agent details
+apex agent logs <agent>         # View agent logs
+apex memory show                # Display shared memory
 ```
 
-### MCP Management
-```bash
-apex mcp list                   # List MCP servers
-apex mcp test <server>          # Test connectivity
-apex mcp tools <server>         # List available tools
-apex mcp validate               # Run compliance tests
+### Project Structure
+
+When you create a new APEX project, it generates:
+
+```
+my-project/
+├── apex.json                   # Project configuration
+├── .git/                       # Git repository (optional)
+├── apex.db                     # LMDB database (created on first run)
+└── ...                         # Your project files
 ```
 
 ## Configuration
 
-### MCP Server Setup
+### Project Configuration (apex.json)
 
-APEX uses JSON configuration files for MCP servers:
+Each APEX project contains an `apex.json` configuration file:
+
+```json
+{
+  "project_id": "unique-project-id",
+  "name": "my-calculator",
+  "description": "A simple calculator application",
+  "tech_stack": ["Python", "CLI"],
+  "project_type": "CLI Tool",
+  "features": ["arithmetic", "testing", "cli"],
+  "created_at": "2025-01-08T12:00:00Z"
+}
+```
+
+### MCP Server Configuration
+
+APEX automatically configures MCP servers for agent communication:
 
 ```json
 {
@@ -181,34 +284,21 @@ APEX uses JSON configuration files for MCP servers:
       "command": "python",
       "args": ["-m", "apex.mcp.lmdb_server"],
       "env": {
-        "LMDB_PATH": "./apex.db"
-      }
-    },
-    "git": {
-      "command": "python",
-      "args": ["-m", "apex.mcp.git_server"],
-      "env": {
-        "GIT_REPO_PATH": "."
+        "LMDB_PATH": "./apex.db",
+        "LMDB_MAP_SIZE": "10737418240"
       }
     }
   }
 }
 ```
 
-### Security Configuration
+### Agent Tool Permissions
 
-```yaml
-# .apex/security.yaml
-security:
-  mcp:
-    tools:
-      rate_limits:
-        default: 100  # requests per minute
-      permissions:
-        supervisor: ["*"]
-        coder: ["mcp__lmdb__*", "mcp__git__status"]
-        adversary: ["mcp__lmdb__read", "mcp__lmdb__list"]
-```
+Each agent type has specific tool permissions:
+
+- **Supervisor**: Full access (task management, git operations, MCP tools)
+- **Coder**: Code editing, file operations, testing, progress reporting
+- **Adversary**: Code analysis, testing, issue reporting, decision sampling
 
 ## TUI Interface
 
@@ -238,22 +328,77 @@ The interactive TUI provides real-time monitoring:
 - Git (for version control integration)
 - [GitHub CLI](https://cli.github.com/) (for GitHub integration)
 
+## Examples
+
+### Creating a Calculator
+
+```bash
+# Create new project
+uv run apex new calculator --tech "Python" --no-git
+cd calculator
+
+# Start with a specific task
+uv run apex start --task "Create a command-line calculator with basic arithmetic operations (add, subtract, multiply, divide) and error handling"
+
+# Check progress
+uv run apex status
+```
+
+Output:
+```
+Starting APEX agents...
+✓ Started workflow: abc-123-def
+Task: Create a command-line calculator with basic arithmetic operations...
+
+Workflow Status:
+Status: pending
+Tasks: 3
+  1. Analyze the following request and plan implementat... → coder
+  2. Implement the solution for: Create a command-line... → coder
+  3. Test and review the implementation for: Create a ... → adversary
+```
+
+### Web API Project
+
+```bash
+# Create API project
+uv run apex new todo-api --tech "Python,FastAPI,SQLAlchemy"
+cd todo-api
+
+# Initialize with detailed task
+uv run apex start --task "Build a RESTful API for a todo application with user authentication, CRUD operations for todos, and SQLite database backend"
+```
+
 ## Development
 
-### Current Status
+### Current Implementation Status
 
-APEX is in **active development** with the following components:
+APEX has reached **Alpha** status with core functionality implemented:
 
-- ✅ **Project Structure**: Complete source code organization
-- ✅ **Build System**: UV package management and dependencies
-- ✅ **CLI Framework**: Basic command structure with Typer
-- ✅ **Testing Suite**: Pytest with coverage reporting
-- ✅ **Code Quality**: Pre-commit hooks with Black, Ruff, MyPy
-- ✅ **Configuration**: Pydantic models and TOML config
-- 🚧 **Process Manager**: Claude CLI orchestration (planned)
-- 🚧 **LMDB MCP Server**: Shared memory backend (planned)
-- 🚧 **Agent System**: Supervisor/Coder/Adversary agents (planned)
-- 🚧 **TUI Interface**: Real-time monitoring dashboard (planned)
+#### ✅ **Completed Components**
+- **Project Structure**: Complete source code organization
+- **Build System**: UV package management and dependencies
+- **CLI Framework**: Functional commands with Rich output formatting
+- **Testing Suite**: Pytest with coverage reporting
+- **Code Quality**: Pre-commit hooks with Black, Ruff, MyPy
+- **Configuration**: Pydantic models and JSON config files
+- **Process Manager**: Claude CLI process orchestration
+- **LMDB MCP Server**: Shared memory backend with stdio transport
+- **Agent System**: Supervisor/Coder/Adversary agent prompts and coordination
+- **Task Workflow**: Complete task assignment and tracking system
+- **Stream Parser**: Real-time Claude CLI output parsing and persistence
+
+#### 🚧 **In Progress**
+- **TUI Interface**: Interactive dashboard (basic structure complete)
+- **Session Continuity**: Pause/resume capabilities
+- **Git Integration**: Automatic commit and branch management
+- **GitHub Integration**: PR and issue management
+
+#### 📋 **Planned Features**
+- **Multi-project Management**: Project switching and templates
+- **Performance Monitoring**: Metrics and analytics
+- **Remote MCP Servers**: Distributed agent deployment
+- **Plugin System**: Custom agent types and tools
 
 ### Development Setup
 
@@ -262,28 +407,59 @@ APEX is in **active development** with the following components:
 git clone https://github.com/nibzard/apex
 cd apex
 uv sync
-uv pip install -e ".[dev,docs]"
+uv pip install -e ".[dev]"
 
-# Run development setup
-PYTHONPATH=./src uv run python scripts/setup_dev.py
+# Install pre-commit hooks
+uv run pre-commit install
 
 # Run tests
-./scripts/dev.sh test
+uv run pytest
 
-# Development commands
-./scripts/dev.sh --help
+# Code quality checks
+uv run black src tests
+uv run ruff check --fix src tests
+uv run mypy src
+
+# Run all quality checks
+uv run pre-commit run --all-files
+
+# Test CLI functionality
+uv run apex version
+uv run apex --help
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
 
-## Performance
+## Troubleshooting
+
+### Common Issues
+
+**"No APEX project found in current directory"**
+```bash
+# Initialize APEX in your project
+uv run apex init
+```
+
+**"Claude CLI not found"**
+```bash
+# Install Claude CLI first
+# Follow setup guide at https://claude.ai/code
+```
+
+**"MCP server connection failed"**
+```bash
+# Check if LMDB server can start
+uv run python -m apex.mcp.lmdb_server
+```
+
+### Performance Notes
 
 APEX is designed for high performance:
 
-- **Sub-100ms**: Agent communication latency
-- **Sub-10ms**: LMDB operations
-- **10+ Agents**: Concurrent process support
-- **99.9%**: System reliability with auto-recovery
+- **Sub-100ms**: Agent communication latency via LMDB
+- **Sub-10ms**: Memory operations with LMDB
+- **3+ Agents**: Concurrent process support
+- **Auto-recovery**: Automatic restart on agent failure
 
 ## License
 
