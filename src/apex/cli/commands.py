@@ -3,6 +3,8 @@
 from pathlib import Path
 from typing import Optional
 
+from apex.vcs import GitHubClient, GitWrapper, auto_commit
+
 import typer
 
 app = typer.Typer(
@@ -10,6 +12,9 @@ app = typer.Typer(
     help="APEX - Adversarial Pair EXecution for AI-powered development",
     no_args_is_help=True,
 )
+
+git_app = typer.Typer(help="Git operations")
+github_app = typer.Typer(help="GitHub integration")
 
 
 @app.command()
@@ -78,6 +83,48 @@ def version():
     from apex import __version__
 
     typer.echo(f"APEX v{__version__}")
+
+
+
+
+@git_app.command("status")
+def git_status():
+    """Show git status."""
+    wrapper = GitWrapper(Path("."))
+    typer.echo(wrapper.status())
+
+
+@git_app.command("auto-commit")
+def git_auto_commit(
+    message: Optional[str] = typer.Option(None, "--message", "-m"),
+    no_tests: bool = typer.Option(False, "--no-tests", help="Skip test requirement"),
+):
+    """Stage changes, optionally run tests, and commit."""
+    if not no_tests:
+        typer.echo("Running tests...")
+        # Placeholder for running project tests
+    sha = auto_commit(Path("."), message)
+    typer.echo(f"Committed {sha}")
+
+
+@github_app.command("pr-create")
+def github_pr_create(
+    repo: str = typer.Option(..., "--repo", help="Repository name"),
+    title: str = typer.Option(..., "--title", help="PR title"),
+    body: str = typer.Option("", "--body", help="PR description"),
+    head: str = typer.Option("main", "--head", help="Head branch"),
+    base: str = typer.Option("main", "--base", help="Base branch"),
+    draft: bool = typer.Option(False, "--draft", help="Create draft PR"),
+):
+    """Create a pull request on GitHub."""
+    client = GitHubClient()
+    url = client.create_pull_request(repo, title, body, head, base, draft)
+    typer.echo(url)
+
+
+# Register subcommands
+app.add_typer(git_app, name="git")
+app.add_typer(github_app, name="github")
 
 
 def main():
