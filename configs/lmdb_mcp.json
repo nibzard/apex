@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "lmdb": {
+      "command": "python",
+      "args": ["-m", "apex.mcp.lmdb_server"],
+      "env": {
+        "LMDB_PATH": "./apex.db",
+        "LMDB_MAP_SIZE": "10737418240"
+      }
+    }
+  }
+}
