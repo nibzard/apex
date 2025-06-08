@@ -304,19 +304,19 @@ Each agent type has specific tool permissions:
 The interactive TUI provides real-time monitoring:
 
 ```
-┌─ APEX Dashboard ─────────────────────────────────────────────┐
+┌─ APEX Dashboard ────────────────────────────────────────────┐
 │ Project: myapp | Session: abc-123 | Git: main (3 ahead)     │
-├──────────────────────────────────────────────────────────────┤
+├─────────────────────────────────────────────────────────────┤
 │ ┌─ Agent Status ──────────┐ ┌─ Current Tasks ─────────────┐ │
-│ │ Supervisor  ✓ Planning  │ │ ▶ Implement user auth      │ │
-│ │ Coder       ✓ Coding    │ │   ├─ Create user model     │ │
-│ │ Adversary   ✓ Testing   │ │   ├─ Add login endpoint    │ │
-│ │                         │ │   └─ Setup JWT tokens      │ │
+│ │ Supervisor  ✓ Planning  │ │ ▶ Implement user auth       │ │
+│ │ Coder       ✓ Coding    │ │   ├─ Create user model      │ │
+│ │ Adversary   ✓ Testing   │ │   ├─ Add login endpoint     │ │
+│ │                         │ │   └─ Setup JWT tokens       │ │
 │ │ Memory: 2.1GB           │ │                             │ │
-│ │ Uptime: 02:34:56        │ │ ▶ Add error handling       │ │
+│ │ Uptime: 02:34:56        │ │ ▶ Add error handling        │ │
 │ └─────────────────────────┘ └─────────────────────────────┘ │
-│ [F1]Help [F2]Agents [F3]Memory [F4]Tasks [F5]Git [Q]Quit     │
-└──────────────────────────────────────────────────────────────┘
+│ [F1]Help [F2]Agents [F3]Memory [F4]Tasks [F5]Git [Q]Quit    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Requirements
