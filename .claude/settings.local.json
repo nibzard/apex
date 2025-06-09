@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(uv run pytest tests/unit/core/test_memory.py::TestMemoryPatterns::test_create_project -v)"
+    ],
+    "deny": []
+  }
+}

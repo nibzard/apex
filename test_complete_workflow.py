@@ -36,7 +36,10 @@ async def test_complete_workflow():
         print("1️⃣  Starting Complete Workflow...")
 
         # Start workflow with user request
-        user_request = "Create a simple calculator that can add, subtract, multiply and divide two numbers"
+        user_request = (
+            "Create a simple calculator that can add, subtract, "
+            "multiply and divide two numbers"
+        )
         workflow_id = await runner.start_workflow(user_request, auto_start_agents=False)
 
         print(f"✅ Workflow started: {workflow_id}")
@@ -135,9 +138,8 @@ async def test_complete_workflow():
         print(f"🤖 Tracked Processes: {len(all_processes)}")
 
         for name, info in all_processes.items():
-            print(
-                f"   • {name}: {info.get('type', 'unknown')} ({'running' if info.get('running') else 'stopped'})"
-            )
+            status = "running" if info.get("running") else "stopped"
+            print(f"   • {name}: {info.get('type', 'unknown')} ({status})")
         print()
 
         print("✅ WORKFLOW TEST COMPLETED SUCCESSFULLY!")

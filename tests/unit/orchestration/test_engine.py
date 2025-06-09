@@ -5,6 +5,7 @@ from apex.types import ProjectConfig
 
 
 def sample_project() -> ProjectConfig:
+    """Create a sample project configuration for testing."""
     return ProjectConfig(
         project_id="p1",
         name="Engine",
@@ -16,6 +17,7 @@ def sample_project() -> ProjectConfig:
 
 
 def test_run_workflow(tmp_path):
+    """Test workflow execution with session management."""
     session_manager = SessionManager(tmp_path)
     session = session_manager.create(sample_project())
 

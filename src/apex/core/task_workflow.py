@@ -16,6 +16,12 @@ class TaskWorkflow:
     """Manages task assignment and workflow between agents."""
 
     def __init__(self, lmdb: LMDBMCP) -> None:
+        """Initialize task workflow manager.
+
+        Args:
+            lmdb: LMDB MCP instance for persistence
+
+        """
         self.lmdb = lmdb
 
     async def assign_task(
@@ -233,11 +239,14 @@ class TaskWorkflow:
         task_ids = []
 
         # Example workflow breakdown
-        # In a real implementation, this would use AI to intelligently break down the request
+        # In a real implementation, this would use AI to intelligently
+        # break down the request
 
         # 1. Analysis task for Coder
         analysis_task_id = await self.assign_task(
-            description=f"Analyze the following request and plan implementation: {user_request}",
+            description=(
+                f"Analyze the following request and plan implementation: {user_request}"
+            ),
             assigned_to=AgentType.CODER,
             priority="high",
         )
@@ -297,6 +306,12 @@ class WorkflowManager:
     """High-level workflow management for APEX system."""
 
     def __init__(self, task_workflow: TaskWorkflow) -> None:
+        """Initialize workflow manager.
+
+        Args:
+            task_workflow: Task workflow instance
+
+        """
         self.workflow = task_workflow
 
     async def start_project_workflow(
@@ -412,9 +427,10 @@ async def test_task_workflow():
         # Check workflow status
         status = await manager.get_workflow_status(workflow_id)
         print(f"Workflow status: {status['status']}")
-        print(
-            f"Tasks completed: {len([t for t in status['task_statuses'] if t.get('status') == 'completed'])}"
-        )
+        completed_tasks = [
+            t for t in status["task_statuses"] if t.get("status") == "completed"
+        ]
+        print(f"Tasks completed: {len(completed_tasks)}")
 
     finally:
         lmdb.close()

@@ -4,6 +4,7 @@ from apex.orchestration import EventBus
 
 
 def test_publish_and_replay(tmp_path):
+    """Test event publishing and replay functionality."""
     bus = EventBus(tmp_path / "events.db")
     bus.publish("test", {"foo": "bar"})
 

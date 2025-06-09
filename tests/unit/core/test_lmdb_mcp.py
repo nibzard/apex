@@ -1,11 +1,10 @@
 """Tests for LMDBMCP."""
 
-from pathlib import Path
-
 from apex.core import LMDBMCP
 
 
 def test_lmdb_read_write(tmp_path):
+    """Test LMDB read, write, list, and delete operations."""
     path = tmp_path / "db"
     mcp = LMDBMCP(path)
     mcp.write("foo", b"bar")

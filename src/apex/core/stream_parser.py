@@ -39,6 +39,7 @@ class SystemEvent(StreamEvent):
     """System event from Claude CLI."""
 
     def __post_init__(self) -> None:
+        """Initialize system event."""
         self.event_type = "system"
 
 
@@ -47,6 +48,7 @@ class AssistantEvent(StreamEvent):
     """Assistant event from Claude CLI."""
 
     def __post_init__(self) -> None:
+        """Initialize assistant event."""
         self.event_type = "assistant"
 
 
@@ -59,6 +61,7 @@ class ToolCallEvent(StreamEvent):
     parameters: dict
 
     def __post_init__(self) -> None:
+        """Initialize tool call event."""
         self.event_type = "tool_call"
 
 
@@ -71,6 +74,7 @@ class ToolResultEvent(StreamEvent):
     error: Optional[str] = None
 
     def __post_init__(self) -> None:
+        """Initialize tool result event."""
         self.event_type = "tool_result"
 
 
@@ -80,6 +84,14 @@ class StreamParser:
     def __init__(
         self, agent_id: str, session_id: str, mcp: Optional[LMDBMCP] = None
     ) -> None:
+        """Initialize stream parser.
+
+        Args:
+            agent_id: ID of the agent producing the stream
+            session_id: ID of the current session
+            mcp: Optional LMDB MCP instance for persistence
+
+        """
         self.agent_id = agent_id
         self.session_id = session_id
         self.buffer = ""
@@ -164,7 +176,7 @@ class StreamParser:
                 continue
 
     def parse_lines(self, lines: Iterable[str]) -> Iterator[StreamEvent]:
-        """Convenience method to parse an iterable of lines."""
+        """Parse an iterable of lines."""
         for line in lines:
             yield from self.feed(line + "\n")
 

@@ -28,6 +28,12 @@ class SessionManager:
     """Manage the lifecycle of APEX sessions."""
 
     def __init__(self, path: Path):
+        """Initialize session manager.
+
+        Args:
+            path: Directory path for session storage
+
+        """
         self.path = path
         self.path.mkdir(parents=True, exist_ok=True)
         # a dedicated LMDB environment for sessions

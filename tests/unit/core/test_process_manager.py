@@ -7,6 +7,7 @@ from apex.core import ProcessManager
 
 
 def test_process_lifecycle():
+    """Test basic process lifecycle operations."""
     manager = ProcessManager()
     cmd = [sys.executable, "-c", "import time; time.sleep(0.5)"]
     manager.spawn("test", cmd)
@@ -22,6 +23,7 @@ def test_process_lifecycle():
 
 
 def test_monitor_restart_on_failure():
+    """Test process monitoring and restart on failure."""
     manager = ProcessManager()
     cmd = [sys.executable, "-c", "import time; time.sleep(5)"]
     manager.spawn("mon", cmd)

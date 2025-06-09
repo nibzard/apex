@@ -142,3 +142,7 @@ uv run mkdocs serve
 - LMDB operations use transactions for ACID compliance
 - Process management includes automatic restart and health monitoring
 - Security features include OAuth 2.0 for remote MCP servers and TLS for SSE transport
+
+## Agent Instructions
+
+- Never do a mock implementation! This is strongly forbidden!

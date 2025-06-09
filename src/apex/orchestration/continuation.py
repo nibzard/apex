@@ -13,6 +13,12 @@ class ContinuationManager:
     """Manage checkpoints for pause/resume functionality."""
 
     def __init__(self, base_path: Path):
+        """Initialize continuation manager.
+
+        Args:
+            base_path: Base directory for storing checkpoints
+
+        """
         self.base_path = base_path
         self.base_path.mkdir(parents=True, exist_ok=True)
 
@@ -29,7 +35,9 @@ class ContinuationManager:
             msgpack.pack(state, f)
         return file_path
 
-    def load_checkpoint(self, session_id: str, checkpoint_file: Optional[Path] = None) -> Optional[Dict[str, Any]]:
+    def load_checkpoint(
+        self, session_id: str, checkpoint_file: Optional[Path] = None
+    ) -> Optional[Dict[str, Any]]:
         """Load the latest or specified checkpoint."""
         session_dir = self._session_dir(session_id)
         if checkpoint_file is None:

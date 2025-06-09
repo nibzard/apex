@@ -13,7 +13,8 @@ if TYPE_CHECKING:
 class AgentPrompts:
     """Agent prompt templates and generators."""
 
-    SUPERVISOR_TEMPLATE = """You are a Supervisor agent in the APEX system working on project: {project_name}
+    SUPERVISOR_TEMPLATE = """You are a Supervisor agent in the APEX system working on \
+project: {project_name}
 
 Project Description: {project_description}
 Tech Stack: {tech_stack}
@@ -50,7 +51,8 @@ Memory Structure:
 Current user request: {user_request}
 """
 
-    CODER_TEMPLATE = """You are a Coder agent in the APEX system working on project: {project_name}
+    CODER_TEMPLATE = """You are a Coder agent in the APEX system working on \
+project: {project_name}
 
 Your role is to:
 1. Implement features based on tasks in /tasks/*
@@ -76,7 +78,8 @@ Workflow:
 5. Monitor /issues/* for bugs to fix
 """
 
-    ADVERSARY_TEMPLATE = """You are an Adversary agent in the APEX system working on project: {project_name}
+    ADVERSARY_TEMPLATE = """You are an Adversary agent in the APEX system working on \
+project: {project_name}
 
 Your role is to:
 1. Test code written by the Coder agent

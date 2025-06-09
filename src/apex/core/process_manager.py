@@ -25,6 +25,15 @@ class ClaudeProcess:
         mcp_config: Path,
         model: str = "claude-sonnet-4-20250514",
     ) -> None:
+        """Initialize Claude CLI process wrapper.
+
+        Args:
+            agent_type: Type of agent (supervisor, coder, adversary)
+            prompt: Initial prompt for the agent
+            mcp_config: Path to MCP configuration file
+            model: Claude model to use
+
+        """
         self.agent_type = agent_type
         self.prompt = prompt
         self.mcp_config = mcp_config
@@ -170,6 +179,12 @@ class ManagedProcess:
     """Legacy wrapper for backward compatibility."""
 
     def __init__(self, command: List[str]) -> None:
+        """Initialize managed process wrapper.
+
+        Args:
+            command: Command and arguments to execute
+
+        """
         self.command = command
         self.process: Optional[subprocess.Popen] = None
         self.start_time: Optional[float] = None
@@ -211,6 +226,12 @@ class ProcessManager:
     """Manage multiple agent processes."""
 
     def __init__(self, mcp_config: Optional[Path] = None) -> None:
+        """Initialize process manager.
+
+        Args:
+            mcp_config: Path to MCP configuration file
+
+        """
         self.processes: Dict[str, ManagedProcess] = {}
         self.claude_processes: Dict[str, ClaudeProcess] = {}
         self._desired_state: Dict[str, bool] = {}

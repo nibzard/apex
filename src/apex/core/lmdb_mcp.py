@@ -1,6 +1,7 @@
 """LMDB MCP server implementation."""
 
 from __future__ import annotations
+
 from pathlib import Path
 from typing import List, Optional
 
@@ -11,6 +12,13 @@ class LMDBMCP:
     """Simple LMDB-based MCP server."""
 
     def __init__(self, path: Path, map_size: int = 1_048_576) -> None:
+        """Initialize LMDB-based MCP server.
+
+        Args:
+            path: Path to LMDB database directory
+            map_size: Maximum size database may grow to; used to size the memory mapping
+
+        """
         self.env = lmdb.open(str(path), map_size=map_size, max_dbs=1)
         self.db = self.env.open_db(b"apex")
 

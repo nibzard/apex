@@ -1,8 +1,9 @@
 """Core infrastructure modules for APEX."""
 
-from .process_manager import ProcessManager
-from .stream_parser import StreamParser, SystemEvent, AssistantEvent, ToolCallEvent
 from .lmdb_mcp import LMDBMCP
+from .memory import MemoryPatterns, MemorySnapshot
+from .process_manager import ProcessManager
+from .stream_parser import AssistantEvent, StreamParser, SystemEvent, ToolCallEvent
 
 __all__ = [
     "ProcessManager",
@@ -11,4 +12,6 @@ __all__ = [
     "AssistantEvent",
     "ToolCallEvent",
     "LMDBMCP",
+    "MemoryPatterns",
+    "MemorySnapshot",
 ]

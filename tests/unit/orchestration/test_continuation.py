@@ -4,6 +4,7 @@ from apex.orchestration import ContinuationManager
 
 
 def test_save_and_load_checkpoint(tmp_path):
+    """Test checkpoint save and load functionality."""
     manager = ContinuationManager(tmp_path)
     state = {"counter": 1}
 

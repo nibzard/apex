@@ -5,6 +5,7 @@ from apex.types import ProjectConfig
 
 
 def sample_project() -> ProjectConfig:
+    """Create a sample project configuration for testing."""
     return ProjectConfig(
         project_id="proj1",
         name="Test",
@@ -16,6 +17,7 @@ def sample_project() -> ProjectConfig:
 
 
 def test_create_and_get_session(tmp_path):
+    """Test session creation and retrieval."""
     manager = SessionManager(tmp_path)
     config = sample_project()
 
@@ -28,6 +30,7 @@ def test_create_and_get_session(tmp_path):
 
 
 def test_list_sessions(tmp_path):
+    """Test listing multiple sessions."""
     manager = SessionManager(tmp_path)
     config = sample_project()
 

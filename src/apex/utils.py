@@ -6,7 +6,7 @@ import structlog
 
 
 def setup_logging(level: str = "info", debug: bool = False) -> None:
-    """Setup structured logging."""
+    """Set up structured logging."""
     log_level = getattr(logging, level.upper())
 
     structlog.configure(

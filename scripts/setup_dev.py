@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 def setup_development():
-    """Setup development environment."""
+    """Set up development environment."""
     print("🚀 Setting up APEX development environment...")
 
     # Get project root

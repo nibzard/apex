@@ -4,6 +4,7 @@ from apex.orchestration import StateStore
 
 
 def test_set_get_delete(tmp_path):
+    """Test basic state store operations."""
     store = StateStore(tmp_path / "state.db")
 
     store.set("foo", {"bar": 1})

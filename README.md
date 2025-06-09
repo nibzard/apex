@@ -22,17 +22,17 @@
 
 ## Overview
 
-APEX orchestrates multiple Claude CLI processes working in an adversarial manner to produce robust, secure code at unprecedented velocity. The system maintains developer flow through intelligent session management, real-time monitoring, and seamless pause/resume capabilities.
+APEX orchestrates multiple Claude Code instances working in an adversarial manner to produce robust, secure code at unprecedented velocity. Built on Claude Code's native MCP system, APEX provides seamless multi-agent workflows with intelligent task distribution and real-time collaboration.
 
 ### Key Features
 
 - 🤖 **Three-Agent System**: Supervisor, Coder, and Adversary agents working collaboratively
 - 🔄 **Adversarial Workflow**: Continuous code generation, testing, and improvement cycles
 - 💾 **State Persistence**: Complete session management with pause/resume capabilities
-- ⚡ **Real-time Monitoring**: Live TUI interface showing agent activity and progress
-- 🔧 **MCP Integration**: Model Context Protocol for secure agent communication
-- 📊 **LMDB Backend**: Lightning-fast memory-mapped database for state management
-- 🎯 **Smart Orchestration**: Intelligent task distribution and dependency management
+- ⚡ **Claude Code Integration**: Native MCP integration with automatic setup
+- 🔧 **Shared Memory**: LMDB backend for secure agent communication
+- 📊 **Real-time Coordination**: Intelligent task distribution and dependency management
+- 🚀 **Zero Configuration**: Projects ready for Claude Code out of the box
 
 ## Quick Start
 
@@ -60,20 +60,22 @@ uv pip install -e ".[dev]"
 ### Quick Demo
 
 ```bash
-# Create a new project
+# Create a new project with Claude Code integration
 uv run apex new my-calculator --tech "Python" --no-git
 
 # Enter the project directory
 cd my-calculator
 
-# Start APEX with a task
+# Option 1: Use APEX orchestration
 uv run apex start --task "Create a simple calculator with add, subtract, multiply, and divide functions"
 
-# Monitor progress
-uv run apex status
+# Option 2: Use Claude Code with APEX MCP tools (Recommended)
+claude  # Automatically loads APEX MCP integration
 
-# View the TUI dashboard (coming soon)
-uv run apex tui
+# In Claude Code, try:
+# > apex_project_status my-calculator-id
+# > apex_lmdb_write /projects/my-calculator/task1 '{"description": "Create calculator", "status": "pending"}'
+# > apex_lmdb_read /projects/my-calculator/task1
 ```
 
 ### Core Commands
@@ -136,29 +138,38 @@ uv run apex status
 
 ## Architecture
 
-APEX uses a multi-layered architecture with three specialized AI agents:
+APEX integrates with Claude Code's native MCP system for seamless multi-agent workflows:
 
 ```
 ┌─────────────────────────────────────────┐
 │              APEX CLI/TUI               │
-│    Command Parser │ TUI │ Session Mgr   │
+│    Project Setup │ Monitoring │ Config  │
 └─────────────┬───────────────────────────┘
               │
 ┌─────────────▼───────────────────────────┐
-│           Orchestration Engine          │
-│  Process Manager │ Stream Parser │ etc  │
+│            Claude Code                  │
+│     Native MCP │ Agent Tools │ stdio    │
 └─────────────┬───────────────────────────┘
               │
 ┌─────────────▼───────────────────────────┐
-│          Claude CLI Processes           │
-│  Supervisor │    Coder    │ Adversary   │
+│           APEX MCP Server               │
+│  apex_lmdb_* │ apex_project_* │ Tools   │
 └─────────────┬───────────────────────────┘
               │
 ┌─────────────▼───────────────────────────┐
-│            LMDB MCP Server              │
-│  Agent State │ Project Data │ History   │
+│            LMDB Database                │
+│  Projects │ Tasks │ Agent State │ Code  │
 └─────────────────────────────────────────┘
 ```
+
+### New Integration Model
+
+Instead of managing external Claude CLI processes, APEX now:
+
+1. **Sets up MCP configuration** automatically when creating projects
+2. **Provides APEX MCP tools** to Claude Code instances
+3. **Enables multi-agent coordination** through shared LMDB memory
+4. **Simplifies deployment** - no external servers to manage
 
 ### Agent Roles
 
@@ -272,32 +283,46 @@ Each APEX project contains an `apex.json` configuration file:
 }
 ```
 
-### MCP Server Configuration
+### MCP Integration (.mcp.json)
 
-APEX automatically configures MCP servers for agent communication:
+APEX automatically creates `.mcp.json` files for Claude Code integration:
 
 ```json
 {
   "mcpServers": {
-    "lmdb": {
+    "apex-lmdb": {
       "command": "python",
-      "args": ["-m", "apex.mcp.lmdb_server"],
+      "args": ["-m", "apex.mcp"],
       "env": {
-        "LMDB_PATH": "./apex.db",
-        "LMDB_MAP_SIZE": "10737418240"
+        "APEX_LMDB_PATH": "./apex_shared.db",
+        "APEX_LMDB_MAP_SIZE": "1073741824"
       }
     }
   }
 }
 ```
 
-### Agent Tool Permissions
+This enables Claude Code to automatically connect to APEX's MCP server when working in any APEX project directory.
 
-Each agent type has specific tool permissions:
+### APEX MCP Tools
 
-- **Supervisor**: Full access (task management, git operations, MCP tools)
-- **Coder**: Code editing, file operations, testing, progress reporting
-- **Adversary**: Code analysis, testing, issue reporting, decision sampling
+APEX provides specialized MCP tools for multi-agent coordination:
+
+- **apex_lmdb_read**: Read data from shared memory
+- **apex_lmdb_write**: Write data to shared memory
+- **apex_lmdb_list**: List keys with optional prefix
+- **apex_lmdb_scan**: Scan key-value pairs with limits
+- **apex_lmdb_delete**: Delete keys from memory
+- **apex_project_status**: Get project status and summary
+
+### Multi-Agent Workflows
+
+With Claude Code + APEX MCP tools, you can:
+
+1. **Start multiple Claude Code instances** in the same project directory
+2. **Coordinate through shared memory** using APEX MCP tools
+3. **Assign different roles** (Supervisor, Coder, Adversary) to each instance
+4. **Track progress** across all agents in real-time
 
 ## TUI Interface
 
@@ -329,44 +354,50 @@ The interactive TUI provides real-time monitoring:
 
 ## Examples
 
-### Creating a Calculator
+### Creating a Calculator with Claude Code
 
 ```bash
-# Create new project
+# Create new project with automatic MCP setup
 uv run apex new calculator --tech "Python" --no-git
 cd calculator
 
-# Start with a specific task
-uv run apex start --task "Create a command-line calculator with basic arithmetic operations (add, subtract, multiply, divide) and error handling"
-
-# Check progress
-uv run apex status
+# Start Claude Code (automatically loads APEX MCP server)
+claude
 ```
 
-Output:
+In Claude Code:
 ```
-Starting APEX agents...
-✓ Started workflow: abc-123-def
-Task: Create a command-line calculator with basic arithmetic operations...
+> I want to create a calculator with multiple agents. Let me set up the project structure first.
 
-Workflow Status:
-Status: pending
-Tasks: 3
-  1. Analyze the following request and plan implementat... → coder
-  2. Implement the solution for: Create a command-line... → coder
-  3. Test and review the implementation for: Create a ... → adversary
+> apex_lmdb_write /projects/calc-123/config '{"name": "calculator", "status": "active"}'
+
+> apex_lmdb_write /projects/calc-123/tasks/task1 '{"description": "Create Calculator class with basic arithmetic", "assigned_to": "coder", "status": "pending"}'
+
+> apex_lmdb_write /projects/calc-123/tasks/task2 '{"description": "Review and test Calculator implementation", "assigned_to": "adversary", "status": "pending"}'
+
+> apex_project_status calc-123
 ```
 
-### Web API Project
+This enables seamless multi-agent coordination through shared memory while using Claude Code's familiar interface.
+
+### Multi-Agent Web API Development
 
 ```bash
-# Create API project
+# Create API project with MCP integration
 uv run apex new todo-api --tech "Python,FastAPI,SQLAlchemy"
 cd todo-api
 
-# Initialize with detailed task
-uv run apex start --task "Build a RESTful API for a todo application with user authentication, CRUD operations for todos, and SQLite database backend"
+# Terminal 1: Supervisor Agent
+claude --prompt "You are the Supervisor agent for this todo API project. Break down tasks and coordinate work."
+
+# Terminal 2: Coder Agent  
+claude --prompt "You are the Coder agent. Implement features assigned to you."
+
+# Terminal 3: Adversary Agent
+claude --prompt "You are the Adversary agent. Review code and find issues."
 ```
+
+Each Claude Code instance can coordinate through APEX MCP tools for seamless multi-agent development.
 
 ## Development
 
@@ -376,16 +407,17 @@ APEX has reached **Alpha** status with core functionality implemented:
 
 #### ✅ **Completed Components**
 - **Project Structure**: Complete source code organization
-- **Build System**: UV package management and dependencies
+- **Build System**: UV package management and dependencies  
 - **CLI Framework**: Functional commands with Rich output formatting
-- **Testing Suite**: Pytest with coverage reporting
+- **Testing Suite**: Pytest with coverage reporting (41 tests passing)
 - **Code Quality**: Pre-commit hooks with Black, Ruff, MyPy
 - **Configuration**: Pydantic models and JSON config files
-- **Process Manager**: Claude CLI process orchestration
-- **LMDB MCP Server**: Shared memory backend with stdio transport
-- **Agent System**: Supervisor/Coder/Adversary agent prompts and coordination
+- **Claude Code Integration**: Native MCP integration with automatic setup
+- **APEX MCP Server**: Full MCP server with stdio transport for Claude Code
+- **Memory Patterns**: Comprehensive LMDB operations with 65% test coverage
+- **Agent Coordination**: Supervisor/Coder/Adversary prompts and tools
 - **Task Workflow**: Complete task assignment and tracking system
-- **Stream Parser**: Real-time Claude CLI output parsing and persistence
+- **E2E Testing**: End-to-end integration tests with actual Claude Code
 
 #### 🚧 **In Progress**
 - **TUI Interface**: Interactive dashboard (basic structure complete)
@@ -447,8 +479,11 @@ uv run apex init
 
 **"MCP server connection failed"**
 ```bash
-# Check if LMDB server can start
-uv run python -m apex.mcp.lmdb_server
+# Check if APEX MCP server can start
+APEX_LMDB_PATH="./test.db" uv run python -m apex.mcp
+
+# Or check Claude Code MCP status
+claude mcp list
 ```
 
 ### Performance Notes

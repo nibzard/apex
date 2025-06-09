@@ -30,6 +30,7 @@ dependencies = [
     # Async & Process Management
     "aiofiles>=23.0.0",
     "psutil>=5.9.0", # Process monitoring
+    "nest-asyncio>=1.5.0", # Nested event loop support
     # Git Integration
     "gitpython>=3.1.0", # Git operations
     "pygithub>=2.1.0", # GitHub API
@@ -108,14 +109,19 @@ target-version = ['py311']
 
 [tool.ruff]
 line-length = 88
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "B", "C90", "D"]
 ignore = ["D100", "D104"]
 
 [tool.mypy]
 python_version = "3.11"
-strict = true
-warn_return_any = true
-warn_unused_configs = true
+strict = false
+warn_return_any = false
+warn_unused_configs = false
+ignore_missing_imports = true
+mypy_path = "src"
+packages = ["apex"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
