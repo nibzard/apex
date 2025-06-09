@@ -2,10 +2,9 @@
 
 from typing import Any, Dict, Optional
 
-from textual.app import ComposeResult
 from textual.reactive import reactive
-from textual.widgets import Static
 from textual.timer import Timer
+from textual.widgets import Static
 
 
 class MetricsWidget(Static):

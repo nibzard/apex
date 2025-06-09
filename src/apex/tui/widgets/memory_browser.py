@@ -1,7 +1,7 @@
 """Memory browser widget for TUI."""
 
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical

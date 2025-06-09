@@ -6,9 +6,8 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 import lmdb
 from mcp.server.fastmcp import FastMCP
@@ -39,19 +38,16 @@ class ClaudeLMDBServer:
         if self.env is None:
             # Create parent directory if it doesn't exist
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Open LMDB environment
             self.env = lmdb.open(
-                str(self.db_path),
-                map_size=self.map_size,
-                max_dbs=10,
-                create=True
+                str(self.db_path), map_size=self.map_size, max_dbs=10, create=True
             )
             self.db = self.env.open_db(b"apex_data", create=True)
 
     def _register_tools(self) -> None:
         """Register all MCP tools for APEX."""
-        
+
         @self.app.tool()
         async def apex_lmdb_read(key: str) -> str:
             """Read value from APEX LMDB by key.
@@ -61,6 +57,7 @@ class ClaudeLMDBServer:
 
             Returns:
                 The value as a string, or null if not found
+
             """
             try:
                 self._ensure_db()
@@ -82,6 +79,7 @@ class ClaudeLMDBServer:
 
             Returns:
                 Success confirmation
+
             """
             try:
                 self._ensure_db()
@@ -100,6 +98,7 @@ class ClaudeLMDBServer:
 
             Returns:
                 JSON array of matching keys
+
             """
             try:
                 self._ensure_db()
@@ -129,6 +128,7 @@ class ClaudeLMDBServer:
 
             Returns:
                 Success confirmation
+
             """
             try:
                 self._ensure_db()
@@ -148,12 +148,13 @@ class ClaudeLMDBServer:
 
             Returns:
                 JSON array of key-value pairs
+
             """
             try:
                 self._ensure_db()
                 results = []
                 count = 0
-                
+
                 with self.env.begin(db=self.db) as txn:
                     cursor = txn.cursor()
                     if prefix:
@@ -165,21 +166,19 @@ class ClaudeLMDBServer:
                                 key_str = key.decode()
                                 if not key_str.startswith(prefix):
                                     break
-                                results.append({
-                                    "key": key_str,
-                                    "value": value.decode()
-                                })
+                                results.append(
+                                    {"key": key_str, "value": value.decode()}
+                                )
                                 count += 1
                     else:
                         for key, value in cursor:
                             if count >= limit:
                                 break
-                            results.append({
-                                "key": key.decode(),
-                                "value": value.decode()
-                            })
+                            results.append(
+                                {"key": key.decode(), "value": value.decode()}
+                            )
                             count += 1
-                
+
                 return json.dumps({"results": results, "count": len(results)})
             except Exception as e:
                 return json.dumps({"error": f"Failed to scan: {str(e)}"})
@@ -193,23 +192,24 @@ class ClaudeLMDBServer:
 
             Returns:
                 JSON object with project status information
+
             """
             try:
                 self._ensure_db()
-                
+
                 # Get project config
                 project_key = f"/projects/{project_id}/config"
                 with self.env.begin(db=self.db) as txn:
                     project_data = txn.get(project_key.encode())
                     if not project_data:
                         return json.dumps({"error": f"Project {project_id} not found"})
-                
+
                 project_config = json.loads(project_data.decode())
-                
+
                 # Get task counts
                 task_counts = {"pending": 0, "in_progress": 0, "completed": 0}
                 task_prefix = f"/projects/{project_id}/tasks/"
-                
+
                 with self.env.begin(db=self.db) as txn:
                     cursor = txn.cursor()
                     start_key = task_prefix.encode()
@@ -225,11 +225,11 @@ class ClaudeLMDBServer:
                                     task_counts[status] += 1
                             except:
                                 pass
-                
+
                 # Get agent status
                 agent_statuses = {}
                 agent_prefix = f"/projects/{project_id}/agents/"
-                
+
                 with self.env.begin(db=self.db) as txn:
                     cursor = txn.cursor()
                     start_key = agent_prefix.encode()
@@ -241,18 +241,20 @@ class ClaudeLMDBServer:
                             try:
                                 agent_name = key_str.split("/")[-1]
                                 agent_data = json.loads(value.decode())
-                                agent_statuses[agent_name] = agent_data.get("status", "unknown")
+                                agent_statuses[agent_name] = agent_data.get(
+                                    "status", "unknown"
+                                )
                             except:
                                 pass
-                
+
                 status_summary = {
                     "project_id": project_id,
                     "project_name": project_config.get("name", "Unknown"),
                     "task_counts": task_counts,
                     "agent_statuses": agent_statuses,
-                    "total_tasks": sum(task_counts.values())
+                    "total_tasks": sum(task_counts.values()),
                 }
-                
+
                 return json.dumps(status_summary)
             except Exception as e:
                 return json.dumps({"error": f"Failed to get project status: {str(e)}"})
@@ -274,15 +276,15 @@ def main() -> None:
     # Get configuration from environment variables
     db_path = os.getenv("APEX_LMDB_PATH", "./apex_shared.db")
     map_size_str = os.getenv("APEX_LMDB_MAP_SIZE", "1073741824")  # 1GB default
-    
+
     try:
         map_size = int(map_size_str)
     except ValueError:
         map_size = 1073741824  # Fallback to 1GB
-    
+
     # Create and run the server
     server = ClaudeLMDBServer(db_path, map_size)
-    
+
     try:
         # Run with FastMCP's built-in event loop handling
         asyncio.get_event_loop().run_until_complete(server.run())
@@ -292,6 +294,7 @@ def main() -> None:
         if "already running" in str(e):
             # Handle case where event loop is already running
             import nest_asyncio
+
             nest_asyncio.apply()
             asyncio.get_event_loop().run_until_complete(server.run())
         else:

@@ -134,7 +134,7 @@ This roadmap derives from [`specs.md`](specs.md) and lists the concrete steps ne
 - [x] **Session Control** - **IMPLEMENTED**
   - [x] `apex start` - Start agents with selection and task options
   - [x] `apex pause` - Pause running agents using SIGSTOP
-  - [x] `apex resume` - Resume paused agents using SIGCONT  
+  - [x] `apex resume` - Resume paused agents using SIGCONT
   - [x] `apex stop` - Graceful shutdown with cleanup
 
 - [~] **Agent Management** - **PARTIALLY IMPLEMENTED**
@@ -143,7 +143,7 @@ This roadmap derives from [`specs.md`](specs.md) and lists the concrete steps ne
   - [x] `apex agent restart` - Restart with process management
   - [ ] `apex agent prompt` - View/edit agent prompts
 
-- [~] **Memory Operations** - **PARTIALLY IMPLEMENTED** 
+- [~] **Memory Operations** - **PARTIALLY IMPLEMENTED**
   - [x] `apex memory show` - Display memory with hierarchical namespace organization
   - [ ] `apex memory query` - Query with pattern matching
   - [ ] `apex memory export/import` - Snapshot management
@@ -323,7 +323,7 @@ This roadmap derives from [`specs.md`](specs.md) and lists the concrete steps ne
 4. **[MOSTLY RESOLVED] CLI Functionality** - Core commands implemented
    - ✅ `apex new` project setup implemented
    - ✅ `apex start` implemented with agent management
-   - ✅ `apex status` implemented with process monitoring  
+   - ✅ `apex status` implemented with process monitoring
    - ✅ `apex pause/resume/stop` implemented with process control
    - ✅ `apex memory show` implemented with LMDB integration
    - ⚠️ Needs testing with actual Claude CLI in production

@@ -219,7 +219,7 @@ def new(
     console.print("[dim]Next steps:[/dim]")
     console.print(f"[dim]  cd {project_name}[/dim]")
     console.print('[dim]  apex start --task "Your initial task here"[/dim]')
-    console.print('[dim]  claude  # Start Claude Code with APEX integration[/dim]')
+    console.print("[dim]  claude  # Start Claude Code with APEX integration[/dim]")
 
 
 @app.command()
@@ -491,20 +491,18 @@ def tui(
     theme: Optional[str] = THEME_OPTION,
 ):
     """Launch TUI interface."""
+
     async def _launch_tui():
         from apex.tui import DashboardApp
-        
+
         # Get or create runner for TUI
         runner = await _get_or_create_runner()
         lmdb_client = runner.lmdb if runner else None
-        
+
         # Create and run TUI app
-        app = DashboardApp(
-            agent_runner=runner,
-            lmdb_client=lmdb_client
-        )
+        app = DashboardApp(agent_runner=runner, lmdb_client=lmdb_client)
         await app.run_async()
-    
+
     _run_async(_launch_tui())
 
 

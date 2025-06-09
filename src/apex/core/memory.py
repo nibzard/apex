@@ -97,10 +97,7 @@ class MemoryPatterns:
 
     # Task Management
     async def create_task(
-        self,
-        project_id: str,
-        task_data: Dict[str, Any],
-        assigned_to: str = "coder"
+        self, project_id: str, task_data: Dict[str, Any], assigned_to: str = "coder"
     ) -> str:
         """Create a new task and assign it."""
         task_id = str(uuid.uuid4())
@@ -113,7 +110,7 @@ class MemoryPatterns:
             "status": "pending",
             "created_at": datetime.now().isoformat(),
             "depends_on": task_data.get("depends_on", []),
-            "metadata": task_data.get("metadata", {})
+            "metadata": task_data.get("metadata", {}),
         }
 
         # Write to pending tasks
@@ -122,11 +119,16 @@ class MemoryPatterns:
 
         # Update task index
         index_key = f"/projects/{project_id}/memory/tasks/index/{task_id}"
-        await self.mcp.write(index_key, json.dumps({
-            "status": "pending",
-            "assigned_to": assigned_to,
-            "priority": task_record["priority"]
-        }))
+        await self.mcp.write(
+            index_key,
+            json.dumps(
+                {
+                    "status": "pending",
+                    "assigned_to": assigned_to,
+                    "priority": task_record["priority"],
+                }
+            ),
+        )
 
         return task_id
 
@@ -134,7 +136,7 @@ class MemoryPatterns:
         self,
         project_id: str,
         task_id: str,
-        result_data: Optional[Dict[str, Any]] = None
+        result_data: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """Mark a task as completed and optionally store results."""
         try:
@@ -161,20 +163,23 @@ class MemoryPatterns:
 
             # Update index
             index_key = f"/projects/{project_id}/memory/tasks/index/{task_id}"
-            await self.mcp.write(index_key, json.dumps({
-                "status": "completed",
-                "assigned_to": task["assigned_to"],
-                "priority": task["priority"]
-            }))
+            await self.mcp.write(
+                index_key,
+                json.dumps(
+                    {
+                        "status": "completed",
+                        "assigned_to": task["assigned_to"],
+                        "priority": task["priority"],
+                    }
+                ),
+            )
 
             return True
         except Exception:
             return False
 
     async def get_pending_tasks(
-        self,
-        project_id: str,
-        assigned_to: Optional[str] = None
+        self, project_id: str, assigned_to: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Get pending tasks, optionally filtered by assignee."""
         try:
@@ -191,10 +196,12 @@ class MemoryPatterns:
 
             # Sort by priority and creation time
             priority_order = {"high": 0, "medium": 1, "low": 2}
-            tasks.sort(key=lambda t: (
-                priority_order.get(t.get("priority", "medium"), 1),
-                t.get("created_at", "")
-            ))
+            tasks.sort(
+                key=lambda t: (
+                    priority_order.get(t.get("priority", "medium"), 1),
+                    t.get("created_at", ""),
+                )
+            )
 
             return tasks
         except Exception:
@@ -207,7 +214,7 @@ class MemoryPatterns:
         file_path: str,
         content: str,
         task_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """Store code file in memory."""
         try:
@@ -216,13 +223,12 @@ class MemoryPatterns:
                 "file_path": file_path,
                 "task_id": task_id,
                 "timestamp": datetime.now().isoformat(),
-                "metadata": metadata or {}
+                "metadata": metadata or {},
             }
 
             # Store code content
             code_key = (
-                f"/projects/{project_id}/memory/code/"
-                f"{file_path.replace('/', '__')}"
+                f"/projects/{project_id}/memory/code/{file_path.replace('/', '__')}"
             )
             await self.mcp.write(code_key, json.dumps(code_record))
 
@@ -231,11 +237,16 @@ class MemoryPatterns:
                 f"/projects/{project_id}/memory/code/index/"
                 f"{file_path.replace('/', '__')}"
             )
-            await self.mcp.write(index_key, json.dumps({
-                "file_path": file_path,
-                "task_id": task_id,
-                "last_modified": code_record["timestamp"]
-            }))
+            await self.mcp.write(
+                index_key,
+                json.dumps(
+                    {
+                        "file_path": file_path,
+                        "task_id": task_id,
+                        "last_modified": code_record["timestamp"],
+                    }
+                ),
+            )
 
             return True
         except Exception:
@@ -247,8 +258,7 @@ class MemoryPatterns:
         """Get code file content and metadata."""
         try:
             code_key = (
-                f"/projects/{project_id}/memory/code/"
-                f"{file_path.replace('/', '__')}"
+                f"/projects/{project_id}/memory/code/{file_path.replace('/', '__')}"
             )
             data = await self.mcp.read(code_key)
             return json.loads(data) if data else None
@@ -273,10 +283,7 @@ class MemoryPatterns:
 
     # Issue Management
     async def report_issue(
-        self,
-        project_id: str,
-        issue_data: Dict[str, Any],
-        severity: str = "medium"
+        self, project_id: str, issue_data: Dict[str, Any], severity: str = "medium"
     ) -> str:
         """Report a new issue."""
         issue_id = str(uuid.uuid4())
@@ -292,7 +299,7 @@ class MemoryPatterns:
             "suggested_fix": issue_data.get("suggested_fix", ""),
             "created_at": datetime.now().isoformat(),
             "status": "open",
-            "metadata": issue_data.get("metadata", {})
+            "metadata": issue_data.get("metadata", {}),
         }
 
         # Store issue
@@ -337,17 +344,13 @@ class MemoryPatterns:
             return False
 
     async def get_open_issues(
-        self,
-        project_id: str,
-        severity: Optional[str] = None
+        self, project_id: str, severity: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Get open issues, optionally filtered by severity."""
         try:
             issues = []
             severities = (
-                [severity]
-                if severity
-                else ["critical", "high", "medium", "low"]
+                [severity] if severity else ["critical", "high", "medium", "low"]
             )
 
             for sev in severities:
@@ -363,10 +366,12 @@ class MemoryPatterns:
 
             # Sort by severity and creation time
             severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-            issues.sort(key=lambda i: (
-                severity_order.get(i.get("severity", "medium"), 2),
-                i.get("created_at", "")
-            ))
+            issues.sort(
+                key=lambda i: (
+                    severity_order.get(i.get("severity", "medium"), 2),
+                    i.get("created_at", ""),
+                )
+            )
 
             return issues
         except Exception:
@@ -374,10 +379,7 @@ class MemoryPatterns:
 
     # Agent Status Management
     async def update_agent_status(
-        self,
-        project_id: str,
-        agent_type: AgentType,
-        status_data: Dict[str, Any]
+        self, project_id: str, agent_type: AgentType, status_data: Dict[str, Any]
     ) -> bool:
         """Update agent status information."""
         try:
@@ -386,7 +388,7 @@ class MemoryPatterns:
                 "status": status_data.get("status", "unknown"),
                 "current_task": status_data.get("current_task"),
                 "last_activity": datetime.now().isoformat(),
-                "metadata": status_data.get("metadata", {})
+                "metadata": status_data.get("metadata", {}),
             }
 
             # Store agent status
@@ -402,9 +404,7 @@ class MemoryPatterns:
             return False
 
     async def get_agent_status(
-        self,
-        project_id: str,
-        agent_type: AgentType
+        self, project_id: str, agent_type: AgentType
     ) -> Optional[Dict[str, Any]]:
         """Get agent status."""
         try:
@@ -428,9 +428,7 @@ class MemoryPatterns:
 
     # Session Management
     async def create_session(
-        self,
-        project_id: str,
-        session_data: Dict[str, Any]
+        self, project_id: str, session_data: Dict[str, Any]
     ) -> str:
         """Create a new session."""
         session_id = str(uuid.uuid4())
@@ -440,7 +438,7 @@ class MemoryPatterns:
             "project_id": project_id,
             "created_at": datetime.now().isoformat(),
             "status": "active",
-            "metadata": session_data
+            "metadata": session_data,
         }
 
         # Store session
@@ -454,17 +452,14 @@ class MemoryPatterns:
         return session_id
 
     async def append_session_event(
-        self,
-        project_id: str,
-        session_id: str,
-        event_data: Dict[str, Any]
+        self, project_id: str, session_id: str, event_data: Dict[str, Any]
     ) -> bool:
         """Append an event to session history."""
         try:
             event_record = {
                 "timestamp": datetime.now().isoformat(),
                 "event_id": str(uuid.uuid4()),
-                **event_data
+                **event_data,
             }
 
             # Read current events
@@ -495,7 +490,7 @@ class MemoryPatterns:
                 "tasks": {"pending": 0, "completed": 0},
                 "code_files": 0,
                 "issues": {"critical": 0, "high": 0, "medium": 0, "low": 0},
-                "sessions": 0
+                "sessions": 0,
             }
 
             # Count tasks
@@ -527,9 +522,7 @@ class MemoryPatterns:
             return {}
 
     async def cleanup_old_data(
-        self,
-        project_id: str,
-        days_to_keep: int = 30
+        self, project_id: str, days_to_keep: int = 30
     ) -> Dict[str, int]:
         """Clean up old data from memory."""
         try:
@@ -562,8 +555,8 @@ class MemoryPatterns:
 
                         if len(filtered_events) < original_count:
                             await self.mcp.write(key, json.dumps(filtered_events))
-                            cleanup_stats["deleted_events"] += (
-                                original_count - len(filtered_events)
+                            cleanup_stats["deleted_events"] += original_count - len(
+                                filtered_events
                             )
 
             return cleanup_stats
@@ -583,9 +576,7 @@ class MemorySnapshot:
             self.mcp = AsyncMCPAdapter(mcp)
 
     async def create_snapshot(
-        self,
-        project_id: str,
-        snapshot_id: Optional[str] = None
+        self, project_id: str, snapshot_id: Optional[str] = None
     ) -> str:
         """Create a memory snapshot."""
         if not snapshot_id:
@@ -595,7 +586,7 @@ class MemorySnapshot:
             "id": snapshot_id,
             "project_id": project_id,
             "created_at": datetime.now().isoformat(),
-            "keys": {}
+            "keys": {},
         }
 
         # Get all keys for the project
@@ -637,8 +628,7 @@ class MemorySnapshot:
             return False
 
     async def list_snapshots(
-        self,
-        project_id: Optional[str] = None
+        self, project_id: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """List available snapshots."""
         try:
@@ -657,7 +647,7 @@ class MemorySnapshot:
                             "id": snapshot["id"],
                             "project_id": snapshot["project_id"],
                             "created_at": snapshot["created_at"],
-                            "key_count": len(snapshot.get("keys", {}))
+                            "key_count": len(snapshot.get("keys", {})),
                         }
                         snapshots.append(snapshot_info)
 

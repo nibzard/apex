@@ -1,13 +1,11 @@
 """Agent status widget for TUI."""
 
-from typing import Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, Optional
 
-from textual.app import ComposeResult
-from textual.containers import VerticalScroll
 from textual.reactive import reactive
-from textual.widgets import Static
 from textual.timer import Timer
+from textual.widgets import Static
 
 
 class AgentStatusWidget(Static):

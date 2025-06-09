@@ -1,6 +1,6 @@
 """Agent management screen for TUI."""
 
-from typing import Optional, Any
+from typing import Any, Optional
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical

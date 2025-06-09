@@ -155,7 +155,7 @@ class LMDBMCPServer:
 
                 # Poll for changes with exponential backoff
                 poll_interval = 0.1  # Start with 100ms
-                max_interval = 2.0   # Max 2 seconds
+                max_interval = 2.0  # Max 2 seconds
                 elapsed = 0.0
 
                 while elapsed < timeout:
@@ -172,24 +172,28 @@ class LMDBMCPServer:
                         if self.env is not None and self.db is not None:
                             with self.env.begin(db=self.db) as txn:
                                 value = txn.get(key.encode())
-                            changes.append({
-                                "type": "created",
-                                "key": key,
-                                "value": value.decode() if value else None
-                            })
+                            changes.append(
+                                {
+                                    "type": "created",
+                                    "key": key,
+                                    "value": value.decode() if value else None,
+                                }
+                            )
 
                     # Check for deleted keys
                     deleted_keys = set(initial_keys) - set(current_keys)
                     for key in deleted_keys:
-                        changes.append({
-                            "type": "deleted",
-                            "key": key,
-                            "old_value": (
-                                initial_values[key].decode()
-                                if initial_values[key]
-                                else None
-                            )
-                        })
+                        changes.append(
+                            {
+                                "type": "deleted",
+                                "key": key,
+                                "old_value": (
+                                    initial_values[key].decode()
+                                    if initial_values[key]
+                                    else None
+                                ),
+                            }
+                        )
 
                     # Check for modified keys
                     for key in set(current_keys) & set(initial_keys):
@@ -198,38 +202,40 @@ class LMDBMCPServer:
                                 current_value = txn.get(key.encode())
 
                             if current_value != initial_values[key]:
-                                changes.append({
-                                    "type": "modified",
-                                    "key": key,
-                                    "old_value": (
-                                        initial_values[key].decode()
-                                        if initial_values[key]
-                                        else None
-                                    ),
-                                    "new_value": (
-                                        current_value.decode()
-                                        if current_value
-                                        else None
-                                    )
-                                })
+                                changes.append(
+                                    {
+                                        "type": "modified",
+                                        "key": key,
+                                        "old_value": (
+                                            initial_values[key].decode()
+                                            if initial_values[key]
+                                            else None
+                                        ),
+                                        "new_value": (
+                                            current_value.decode()
+                                            if current_value
+                                            else None
+                                        ),
+                                    }
+                                )
 
                     if changes:
-                        return json.dumps({
-                            "pattern": pattern,
-                            "elapsed": elapsed,
-                            "changes": changes
-                        })
+                        return json.dumps(
+                            {"pattern": pattern, "elapsed": elapsed, "changes": changes}
+                        )
 
                     # Exponential backoff to reduce CPU usage
                     poll_interval = min(poll_interval * 1.2, max_interval)
 
                 # Timeout reached
-                return json.dumps({
-                    "pattern": pattern,
-                    "timeout": True,
-                    "elapsed": elapsed,
-                    "changes": []
-                })
+                return json.dumps(
+                    {
+                        "pattern": pattern,
+                        "timeout": True,
+                        "elapsed": elapsed,
+                        "changes": [],
+                    }
+                )
 
             except Exception as e:
                 return json.dumps({"error": str(e)})
@@ -349,7 +355,10 @@ class LMDBMCPServer:
                             break
 
                         results.append(
-                            {"key": key.decode(), "value": value.decode() if value else ""}
+                            {
+                                "key": key.decode(),
+                                "value": value.decode() if value else "",
+                            }
                         )
                         count += 1
 
@@ -385,7 +394,11 @@ class LMDBMCPServer:
                         elif op_type == "delete":
                             txn.delete(key)
                             results.append(
-                                {"type": "delete", "key": op.get("key"), "success": True}
+                                {
+                                    "type": "delete",
+                                    "key": op.get("key"),
+                                    "success": True,
+                                }
                             )
                         else:
                             results.append(

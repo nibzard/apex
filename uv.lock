@@ -84,6 +84,7 @@ docs = [
 [package.dev-dependencies]
 dev = [
     { name = "ipython" },
+    { name = "pre-commit" },
     { name = "pytest-xdist" },
 ]
 
@@ -129,6 +130,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "ipython", specifier = ">=8.18.0" },
+    { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "pytest-xdist", specifier = ">=3.5.0" },
 ]
 

@@ -8,8 +8,8 @@ from typing import Any, Deque, Dict, List, Optional
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 from textual.reactive import reactive
-from textual.widgets import Static
 from textual.timer import Timer
+from textual.widgets import Static
 
 
 class LogViewerWidget(VerticalScroll):
@@ -137,9 +137,9 @@ class LogViewerWidget(VerticalScroll):
                     "timestamp": datetime.now().isoformat(),
                     "level": "INFO",
                     "agent": "unknown",
-                    "content": value.decode()
-                    if isinstance(value, bytes)
-                    else str(value),
+                    "content": (
+                        value.decode() if isinstance(value, bytes) else str(value)
+                    ),
                     "key": key,
                 }
                 self.log_buffer.append(log_entry)

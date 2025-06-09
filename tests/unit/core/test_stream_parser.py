@@ -1,6 +1,5 @@
 """Tests for StreamParser."""
 
-import asyncio
 import msgpack
 import pytest
 
@@ -32,7 +31,7 @@ async def test_event_persistence(tmp_path):
         '{"type": "tool_use", "name": "test_tool", "id": "t1", "input": {"param": "value"}}',
     ]
     events = list(parser.parse_lines(lines))
-    
+
     # Store events asynchronously
     for e in events:
         await parser.store_event(e)
@@ -42,7 +41,7 @@ async def test_event_persistence(tmp_path):
     agent_keys = [k for k in keys if k.startswith("/agents/a1/messages/")]
 
     assert len(session_keys) == 3  # All events stored in session
-    assert len(agent_keys) == 1   # Only assistant message stored in agent messages
+    assert len(agent_keys) == 1  # Only assistant message stored in agent messages
     assert "/tools/calls/t1" in keys  # Tool call stored
 
     # Validate stored message content

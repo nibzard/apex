@@ -14,13 +14,13 @@ async def test_dashboard_app_runs():
     async with AppTest(app) as pilot:
         # Verify app loaded
         assert pilot.app.title == "APEX Dashboard"
-        
+
         # Verify dashboard screen is pushed
         assert len(pilot.app.screen_stack) > 0
         assert isinstance(pilot.app.screen, DashboardScreen)
 
 
-@pytest.mark.asyncio  
+@pytest.mark.asyncio
 async def test_dashboard_widgets_load():
     """Test that dashboard widgets are loaded."""
     app = DashboardApp()
@@ -30,7 +30,7 @@ async def test_dashboard_widgets_load():
         assert pilot.app.query_one("#agent-status-widget")
         assert pilot.app.query_one("#metrics-widget")
         assert pilot.app.query_one("#activity-log")
-        
+
 
 @pytest.mark.asyncio
 async def test_dashboard_navigation():
@@ -40,7 +40,7 @@ async def test_dashboard_navigation():
         # Test pressing 'a' for agents screen
         await pilot.press("a")
         # In a full test, we'd verify the agents screen is pushed
-        
+
         # Test pressing 'q' to quit
         await pilot.press("q")
         # App should exit

@@ -39,10 +39,7 @@ class TestMemoryPatterns:
     async def test_create_project(self, memory_patterns, mock_mcp):
         """Test project creation."""
         project_id = "test-project"
-        project_data = {
-            "name": "Test Project",
-            "description": "A test project"
-        }
+        project_data = {"name": "Test Project", "description": "A test project"}
 
         # Mock successful writes
         mock_mcp.write.return_value = None
@@ -52,18 +49,14 @@ class TestMemoryPatterns:
         assert result is True
         # Verify project config was written (through adapter)
         mock_mcp.write.assert_any_call(
-            f"/projects/{project_id}/config",
-            json.dumps(project_data).encode()
+            f"/projects/{project_id}/config", json.dumps(project_data).encode()
         )
 
     @pytest.mark.asyncio
     async def test_create_task(self, memory_patterns, mock_mcp):
         """Test task creation."""
         project_id = "test-project"
-        task_data = {
-            "description": "Implement feature X",
-            "priority": "high"
-        }
+        task_data = {"description": "Implement feature X", "priority": "high"}
 
         mock_mcp.write.return_value = None
 
@@ -74,7 +67,8 @@ class TestMemoryPatterns:
 
         # Verify task was written to pending
         pending_calls = [
-            call for call in mock_mcp.write.call_args_list
+            call
+            for call in mock_mcp.write.call_args_list
             if call[0][0].endswith(f"/pending/{task_id}")
         ]
         assert len(pending_calls) == 1
@@ -91,7 +85,7 @@ class TestMemoryPatterns:
             "description": "Test task",
             "status": "pending",
             "assigned_to": "coder",
-            "priority": "medium"
+            "priority": "medium",
         }
 
         mock_mcp.read.return_value = json.dumps(task_data).encode()
@@ -103,8 +97,7 @@ class TestMemoryPatterns:
         assert result is True
         # Verify task was moved to completed
         completed_calls = [
-            call for call in mock_mcp.write.call_args_list
-            if "completed" in call[0][0]
+            call for call in mock_mcp.write.call_args_list if "completed" in call[0][0]
         ]
         assert len(completed_calls) >= 1
 
@@ -116,7 +109,7 @@ class TestMemoryPatterns:
         # Mock pending task keys
         mock_mcp.list_keys.return_value = [
             f"/projects/{project_id}/memory/tasks/pending/task1",
-            f"/projects/{project_id}/memory/tasks/pending/task2"
+            f"/projects/{project_id}/memory/tasks/pending/task2",
         ]
 
         # Mock task data
@@ -125,7 +118,7 @@ class TestMemoryPatterns:
 
         mock_mcp.read.side_effect = [
             json.dumps(task1).encode(),
-            json.dumps(task2).encode()
+            json.dumps(task2).encode(),
         ]
 
         tasks = await memory_patterns.get_pending_tasks(project_id)
@@ -153,7 +146,8 @@ class TestMemoryPatterns:
 
         # Verify code was written
         code_calls = [
-            call for call in mock_mcp.write.call_args_list
+            call
+            for call in mock_mcp.write.call_args_list
             if "memory/code/" in call[0][0] and "index" not in call[0][0]
         ]
         assert len(code_calls) == 1
@@ -166,7 +160,7 @@ class TestMemoryPatterns:
             "type": "security",
             "file": "src/auth.py",
             "line": 42,
-            "description": "SQL injection vulnerability"
+            "description": "SQL injection vulnerability",
         }
         severity = "critical"
 
@@ -179,7 +173,8 @@ class TestMemoryPatterns:
 
         # Verify issue was written
         issue_calls = [
-            call for call in mock_mcp.write.call_args_list
+            call
+            for call in mock_mcp.write.call_args_list
             if f"issues/{severity}" in call[0][0] and issue_id in call[0][0]
         ]
         assert len(issue_calls) == 1
@@ -189,10 +184,7 @@ class TestMemoryPatterns:
         """Test updating agent status."""
         project_id = "test-project"
         agent_type = AgentType.CODER
-        status_data = {
-            "status": "coding",
-            "current_task": "Implement authentication"
-        }
+        status_data = {"status": "coding", "current_task": "Implement authentication"}
 
         mock_mcp.write.return_value = None
 
@@ -204,7 +196,8 @@ class TestMemoryPatterns:
 
         # Verify status was written
         status_calls = [
-            call for call in mock_mcp.write.call_args_list
+            call
+            for call in mock_mcp.write.call_args_list
             if f"agents/{agent_type.value}/status" in call[0][0]
         ]
         assert len(status_calls) == 1
@@ -221,12 +214,12 @@ class TestMemorySnapshot:
         # Mock project keys and data
         mock_mcp.list_keys.return_value = [
             f"/projects/{project_id}/config",
-            f"/projects/{project_id}/memory/tasks/pending/task1"
+            f"/projects/{project_id}/memory/tasks/pending/task1",
         ]
 
         mock_mcp.read.side_effect = [
             json.dumps({"name": "Test Project"}).encode(),
-            json.dumps({"id": "task1", "description": "Test task"}).encode()
+            json.dumps({"id": "task1", "description": "Test task"}).encode(),
         ]
 
         mock_mcp.write.return_value = None
@@ -237,7 +230,8 @@ class TestMemorySnapshot:
 
         # Verify snapshot was written
         snapshot_calls = [
-            call for call in mock_mcp.write.call_args_list
+            call
+            for call in mock_mcp.write.call_args_list
             if f"/snapshots/{snapshot_id}" in call[0][0]
         ]
         assert len(snapshot_calls) == 1
@@ -256,7 +250,7 @@ class TestMemorySnapshot:
                 "/projects/test-project/memory/tasks/pending/task1": json.dumps(
                     {"id": "task1"}
                 ),
-            }
+            },
         }
 
         mock_mcp.read.return_value = json.dumps(snapshot_data).encode()
@@ -268,7 +262,8 @@ class TestMemorySnapshot:
 
         # Verify all keys were restored
         restore_calls = [
-            call for call in mock_mcp.write.call_args_list
+            call
+            for call in mock_mcp.write.call_args_list
             if call[0][0].startswith("/projects/test-project/")
         ]
         assert len(restore_calls) == 2
@@ -281,7 +276,7 @@ class TestMemorySnapshot:
         # Mock snapshot keys
         mock_mcp.list_keys.return_value = [
             "/snapshots/snapshot1",
-            "/snapshots/snapshot2"
+            "/snapshots/snapshot2",
         ]
 
         # Mock snapshot data
@@ -289,18 +284,18 @@ class TestMemorySnapshot:
             "id": "snapshot1",
             "project_id": project_id,
             "created_at": "2024-01-01T00:00:00",
-            "keys": {"key1": "value1"}
+            "keys": {"key1": "value1"},
         }
         snapshot2 = {
             "id": "snapshot2",
             "project_id": "other-project",
             "created_at": "2024-01-02T00:00:00",
-            "keys": {"key2": "value2"}
+            "keys": {"key2": "value2"},
         }
 
         mock_mcp.read.side_effect = [
             json.dumps(snapshot1).encode(),
-            json.dumps(snapshot2).encode()
+            json.dumps(snapshot2).encode(),
         ]
 
         snapshots = await memory_snapshot.list_snapshots(project_id)

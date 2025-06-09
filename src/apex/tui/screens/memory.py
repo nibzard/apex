@@ -1,11 +1,11 @@
 """Memory browser screen for TUI."""
 
-from typing import Optional, Any
+from typing import Any, Optional
 
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input
+from textual.widgets import Footer, Header
 
 from ..widgets import MemoryBrowserWidget
 

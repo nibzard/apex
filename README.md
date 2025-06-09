@@ -390,7 +390,7 @@ cd todo-api
 # Terminal 1: Supervisor Agent
 claude --prompt "You are the Supervisor agent for this todo API project. Break down tasks and coordinate work."
 
-# Terminal 2: Coder Agent  
+# Terminal 2: Coder Agent
 claude --prompt "You are the Coder agent. Implement features assigned to you."
 
 # Terminal 3: Adversary Agent
@@ -407,7 +407,7 @@ APEX has reached **Alpha** status with core functionality implemented:
 
 #### ✅ **Completed Components**
 - **Project Structure**: Complete source code organization
-- **Build System**: UV package management and dependencies  
+- **Build System**: UV package management and dependencies
 - **CLI Framework**: Functional commands with Rich output formatting
 - **Testing Suite**: Pytest with coverage reporting (41 tests passing)
 - **Code Quality**: Pre-commit hooks with Black, Ruff, MyPy
