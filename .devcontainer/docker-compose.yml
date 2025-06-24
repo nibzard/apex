@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  apex-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../:/workspace:cached
+      - apex-lmdb-data:/workspace/.apex/lmdb
+      - apex-agent-logs:/workspace/.apex/logs
+      - /var/run/docker.sock:/var/run/docker-host.sock
+    environment:
+      - APEX_ENVIRONMENT=development
+      - APEX_LMDB_PATH=/workspace/.apex/lmdb/apex.db
+      - APEX_LMDB_MAP_SIZE=1073741824
+      - CLAUDE_CONFIG_DIR=/workspace/.apex/claude
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DOCKER_HOST=unix:///var/run/docker-host.sock
+    ports:
+      - "8000:8000"  # LMDB MCP Server
+      - "8001:8001"  # APEX TUI
+      - "8002:8002"  # Agent Monitoring
+    networks:
+      - apex-network
+    working_dir: /workspace
+    command: sleep infinity
+
+  lmdb-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../:/workspace:cached
+      - apex-lmdb-data:/workspace/.apex/lmdb
+    environment:
+      - APEX_LMDB_PATH=/workspace/.apex/lmdb/apex.db
+      - APEX_LMDB_MAP_SIZE=1073741824
+      - MCP_SERVER_PORT=8000
+    ports:
+      - "8000:8000"
+    networks:
+      - apex-network
+    working_dir: /workspace
+    command: python -m apex.mcp.lmdb_server
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 8000), timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  supervisor-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    volumes:
+      - ../:/workspace:cached
+      - apex-lmdb-data:/workspace/.apex/lmdb
+      - apex-agent-logs:/workspace/.apex/logs
+    environment:
+      - APEX_AGENT_TYPE=supervisor
+      - APEX_LMDB_PATH=/workspace/.apex/lmdb/apex.db
+      - CLAUDE_CONFIG_DIR=/workspace/.apex/claude
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MCP_SERVER_HOST=lmdb-server
+      - MCP_SERVER_PORT=8000
+    networks:
+      - apex-network
+    depends_on:
+      lmdb-server:
+        condition: service_healthy
+    working_dir: /workspace
+    command: python -m apex.agents.supervisor
+    restart: unless-stopped
+
+  coder-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    volumes:
+      - ../:/workspace:cached
+      - apex-lmdb-data:/workspace/.apex/lmdb
+      - apex-agent-logs:/workspace/.apex/logs
+    environment:
+      - APEX_AGENT_TYPE=coder
+      - APEX_LMDB_PATH=/workspace/.apex/lmdb/apex.db
+      - CLAUDE_CONFIG_DIR=/workspace/.apex/claude
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MCP_SERVER_HOST=lmdb-server
+      - MCP_SERVER_PORT=8000
+    networks:
+      - apex-network
+    depends_on:
+      lmdb-server:
+        condition: service_healthy
+    working_dir: /workspace
+    command: python -m apex.agents.coder
+    restart: unless-stopped
+
+  adversary-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    volumes:
+      - ../:/workspace:cached
+      - apex-lmdb-data:/workspace/.apex/lmdb
+      - apex-agent-logs:/workspace/.apex/logs
+    environment:
+      - APEX_AGENT_TYPE=adversary
+      - APEX_LMDB_PATH=/workspace/.apex/lmdb/apex.db
+      - CLAUDE_CONFIG_DIR=/workspace/.apex/claude
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MCP_SERVER_HOST=lmdb-server
+      - MCP_SERVER_PORT=8000
+    networks:
+      - apex-network
+    depends_on:
+      lmdb-server:
+        condition: service_healthy
+    working_dir: /workspace
+    command: python -m apex.agents.adversary
+    restart: unless-stopped
+
+volumes:
+  apex-lmdb-data:
+    driver: local
+  apex-agent-logs:
+    driver: local
+
+networks:
+  apex-network:
+    driver: bridge

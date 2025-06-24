@@ -49,7 +49,7 @@ class ClaudeLMDBServer:
         """Register all MCP tools for APEX."""
 
         @self.app.tool()
-        async def apex_lmdb_read(key: str) -> str:
+        async def mcp__lmdb__read(key: str) -> str:
             """Read value from APEX LMDB by key.
 
             Args:
@@ -70,7 +70,7 @@ class ClaudeLMDBServer:
                 return json.dumps({"error": f"Failed to read key '{key}': {str(e)}"})
 
         @self.app.tool()
-        async def apex_lmdb_write(key: str, value: str) -> str:
+        async def mcp__lmdb__write(key: str, value: str) -> str:
             """Write value to APEX LMDB.
 
             Args:
@@ -90,7 +90,7 @@ class ClaudeLMDBServer:
                 return json.dumps({"error": f"Failed to write key '{key}': {str(e)}"})
 
         @self.app.tool()
-        async def apex_lmdb_list(prefix: str = "") -> str:
+        async def mcp__lmdb__list(prefix: str = "") -> str:
             """List keys with optional prefix from APEX LMDB.
 
             Args:
@@ -120,7 +120,7 @@ class ClaudeLMDBServer:
                 return json.dumps({"error": f"Failed to list keys: {str(e)}"})
 
         @self.app.tool()
-        async def apex_lmdb_delete(key: str) -> str:
+        async def mcp__lmdb__delete(key: str) -> str:
             """Delete a key from APEX LMDB.
 
             Args:
@@ -139,7 +139,7 @@ class ClaudeLMDBServer:
                 return json.dumps({"error": f"Failed to delete key '{key}': {str(e)}"})
 
         @self.app.tool()
-        async def apex_lmdb_scan(prefix: str = "", limit: int = 100) -> str:
+        async def mcp__lmdb__cursor_scan(prefix: str = "", limit: int = 100) -> str:
             """Scan APEX LMDB keys and values with optional prefix.
 
             Args:
@@ -184,7 +184,7 @@ class ClaudeLMDBServer:
                 return json.dumps({"error": f"Failed to scan: {str(e)}"})
 
         @self.app.tool()
-        async def apex_project_status(project_id: str) -> str:
+        async def mcp__lmdb__project_status(project_id: str) -> str:
             """Get APEX project status and summary.
 
             Args:
@@ -258,6 +258,87 @@ class ClaudeLMDBServer:
                 return json.dumps(status_summary)
             except Exception as e:
                 return json.dumps({"error": f"Failed to get project status: {str(e)}"})
+
+        @self.app.tool()
+        async def mcp__lmdb__watch(prefix: str, timeout: int = 30) -> str:
+            """Watch for changes to keys with prefix (polling-based).
+
+            Args:
+                prefix: Key prefix to watch for changes
+                timeout: Maximum time to wait for changes in seconds
+
+            Returns:
+                JSON object with change information or timeout message
+
+            """
+            try:
+                self._ensure_db()
+
+                # Get initial state
+                initial_keys = {}
+                with self.env.begin(db=self.db) as txn:
+                    cursor = txn.cursor()
+                    start_key = prefix.encode()
+                    if cursor.set_range(start_key):
+                        for key, value in cursor:
+                            key_str = key.decode()
+                            if not key_str.startswith(prefix):
+                                break
+                            initial_keys[key_str] = value.decode()
+
+                # Poll for changes
+                import time
+
+                start_time = time.time()
+                poll_interval = 0.5  # 500ms polling interval
+
+                while time.time() - start_time < timeout:
+                    await asyncio.sleep(poll_interval)
+
+                    current_keys = {}
+                    with self.env.begin(db=self.db) as txn:
+                        cursor = txn.cursor()
+                        start_key = prefix.encode()
+                        if cursor.set_range(start_key):
+                            for key, value in cursor:
+                                key_str = key.decode()
+                                if not key_str.startswith(prefix):
+                                    break
+                                current_keys[key_str] = value.decode()
+
+                    # Check for changes
+                    added = set(current_keys.keys()) - set(initial_keys.keys())
+                    removed = set(initial_keys.keys()) - set(current_keys.keys())
+                    modified = {
+                        k
+                        for k in current_keys.keys()
+                        if k in initial_keys and current_keys[k] != initial_keys[k]
+                    }
+
+                    if added or removed or modified:
+                        return json.dumps(
+                            {
+                                "change_detected": True,
+                                "added": list(added),
+                                "removed": list(removed),
+                                "modified": list(modified),
+                                "timestamp": time.time(),
+                            }
+                        )
+
+                # Timeout reached
+                return json.dumps(
+                    {
+                        "change_detected": False,
+                        "message": f"No changes detected within {timeout} seconds",
+                        "timeout": True,
+                    }
+                )
+
+            except Exception as e:
+                return json.dumps(
+                    {"error": f"Failed to watch prefix '{prefix}': {str(e)}"}
+                )
 
     async def run(self) -> None:
         """Run the MCP server with stdio transport for Claude Code."""

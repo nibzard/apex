@@ -1,0 +1,66 @@
+# APEX Agent Container - Optimized for Claude Code execution
+FROM mcr.microsoft.com/devcontainers/python:3.11-bullseye
+
+# Install system dependencies
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends \
+        build-essential \
+        curl \
+        git \
+        vim \
+        jq \
+        netcat \
+        procps \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js and Claude Code
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g @anthropic-ai/claude-code
+
+# Install UV package manager
+RUN pip install uv
+
+# Set up workspace directory
+WORKDIR /workspace
+
+# Copy requirements and install Python dependencies
+COPY pyproject.toml uv.lock* ./
+RUN uv sync --dev
+
+# Install APEX in development mode
+RUN uv pip install -e .
+
+# Create APEX directories
+RUN mkdir -p /workspace/.apex/{lmdb,logs,claude,config}
+
+# Set up Git configuration for container
+RUN git config --global --add safe.directory /workspace
+RUN git config --global user.name "APEX Agent"
+RUN git config --global user.email "agent@apex.local"
+
+# Create agent user
+ARG USERNAME=agent
+ARG USER_UID=1001
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
+
+# Set ownership
+RUN chown -R $USERNAME:$USERNAME /workspace
+
+USER $USERNAME
+
+# Set up agent environment
+RUN echo 'export PATH="/workspace/.venv/bin:$PATH"' >> ~/.bashrc \
+    && echo 'export PYTHONPATH="/workspace/src:$PYTHONPATH"' >> ~/.bashrc
+
+# Health check for agent processes
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pgrep -f "claude" > /dev/null || exit 1
+
+CMD ["python", "-m", "apex.agents.runner"]

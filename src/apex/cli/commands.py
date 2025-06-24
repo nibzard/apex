@@ -491,19 +491,19 @@ def tui(
     theme: Optional[str] = THEME_OPTION,
 ):
     """Launch TUI interface."""
+    # Try to get existing config file
+    from pathlib import Path
 
-    async def _launch_tui():
-        from apex.tui import DashboardApp
+    from apex.tui.app import ApexTUI
 
-        # Get or create runner for TUI
-        runner = await _get_or_create_runner()
-        lmdb_client = runner.lmdb if runner else None
+    project_dir = Path.cwd()
+    lmdb_path = project_dir / ".apex" / "memory.db"
 
-        # Create and run TUI app
-        app = DashboardApp(agent_runner=runner, lmdb_client=lmdb_client)
-        await app.run_async()
-
-    _run_async(_launch_tui())
+    # Create and run TUI app directly (without agent runner for now)
+    app = ApexTUI(
+        agent_runner=None, lmdb_path=lmdb_path if lmdb_path.exists() else None
+    )
+    app.run()
 
 
 @app.command()

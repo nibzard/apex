@@ -2,12 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from apex.types import ProjectConfig
-
-if TYPE_CHECKING:
-    from apex.types import AgentType
+from apex.types import AgentType, ProjectConfig
 
 
 class AgentPrompts:
@@ -131,7 +126,7 @@ Focus on:
 
     @classmethod
     def generate_prompt(
-        cls, agent_type: "AgentType", config: ProjectConfig, user_request: str = ""
+        cls, agent_type: AgentType, config: ProjectConfig, user_request: str = ""
     ) -> str:
         """Generate prompt for any agent type.
 

@@ -7,7 +7,7 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Label, Static
 
-from ..widgets import AgentStatusWidget, LogViewerWidget
+from ..widgets import AgentInteractionWidget, AgentStatusWidget, LogViewerWidget
 
 
 class AgentsScreen(Screen):
@@ -65,7 +65,19 @@ class AgentsScreen(Screen):
                     yield Input(placeholder="Search pattern", id="filter-pattern")
                     yield Button("Apply", id="apply-filters", variant="success")
 
-                yield LogViewerWidget(lmdb_client=self.lmdb_client, id="log-viewer")
+                # Split view: logs and interaction
+                with Horizontal(id="bottom-section"):
+                    # Log viewer on the left
+                    with Vertical(id="log-section", classes="half-width"):
+                        yield LogViewerWidget(
+                            lmdb_client=self.lmdb_client, id="log-viewer"
+                        )
+
+                    # Interaction panel on the right
+                    with Vertical(id="interaction-section", classes="half-width"):
+                        yield AgentInteractionWidget(
+                            lmdb_client=self.lmdb_client, id="agent-interaction"
+                        )
 
         yield Footer()
 

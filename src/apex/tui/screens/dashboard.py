@@ -44,7 +44,9 @@ class DashboardScreen(Screen):
             with Horizontal(id="top-row"):
                 with Vertical(id="left-panel"):
                     yield AgentStatusWidget(
-                        agent_runner=self.agent_runner, id="agent-status-widget"
+                        agent_runner=self.agent_runner,
+                        lmdb_client=self.lmdb_client,
+                        id="agent-status-widget",
                     )
 
                 with Vertical(id="right-panel"):

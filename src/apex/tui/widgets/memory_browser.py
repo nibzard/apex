@@ -1,12 +1,13 @@
 """Memory browser widget for TUI."""
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
-from textual.widgets import Static, Tree
+from textual.timer import Timer
+from textual.widgets import Input, Static, Tree
 from textual.widgets.tree import TreeNode
 
 
@@ -14,16 +15,21 @@ class MemoryBrowserWidget(Horizontal):
     """Widget for browsing LMDB memory hierarchically."""
 
     selected_key: reactive[Optional[str]] = reactive(None)
+    search_query: reactive[str] = reactive("")
+    auto_refresh: reactive[bool] = reactive(True)
 
     def __init__(self, lmdb_client: Optional[Any] = None, **kwargs) -> None:
         """Initialize with optional LMDB client."""
         super().__init__(**kwargs)
         self.lmdb_client = lmdb_client
+        self.refresh_timer: Optional[Timer] = None
+        self.expanded_nodes: Set[str] = set()  # Track expanded nodes
 
     def compose(self) -> ComposeResult:
         """Compose the memory browser layout."""
         with Vertical(id="memory-tree-container"):
             yield Static("[bold cyan]Memory Browser[/bold cyan]", id="memory-header")
+            yield Input(placeholder="Search keys...", id="memory-search")
             yield Tree("Memory", id="memory-tree")
 
         with Vertical(id="memory-content-container"):
@@ -37,6 +43,21 @@ class MemoryBrowserWidget(Horizontal):
         # Connect tree selection event
         tree = self.query_one("#memory-tree", Tree)
         tree.focus()
+
+        # Set up auto-refresh
+        if self.auto_refresh:
+            self.refresh_timer = self.set_interval(5.0, self.auto_refresh_tree)
+
+    def on_unmount(self) -> None:
+        """Clean up when unmounted."""
+        if self.refresh_timer:
+            self.refresh_timer.stop()
+
+    async def on_input_changed(self, event: Input.Changed) -> None:
+        """Handle search input changes."""
+        if event.input.id == "memory-search":
+            self.search_query = event.value
+            self.load_memory_tree()
 
     async def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
         """Handle tree node selection."""
@@ -52,10 +73,27 @@ class MemoryBrowserWidget(Horizontal):
 
         try:
             tree = self.query_one("#memory-tree", Tree)
+
+            # Save expanded state before clearing
+            self._save_expanded_state(tree.root)
+
             tree.clear()
 
             # Get all keys
             keys = self.lmdb_client.list_keys("")
+
+            # Filter keys if search query exists
+            if self.search_query:
+                filtered_keys = [
+                    k for k in keys if self.search_query.lower() in k.lower()
+                ]
+                # Also include parent paths for context
+                expanded_keys = set()
+                for key in filtered_keys:
+                    parts = key.strip("/").split("/")
+                    for i in range(1, len(parts) + 1):
+                        expanded_keys.add("/" + "/".join(parts[:i]))
+                keys = sorted(list(expanded_keys))
 
             # Build tree structure
             tree_data = self._build_tree_structure(keys)
@@ -63,8 +101,29 @@ class MemoryBrowserWidget(Horizontal):
             # Populate tree widget
             self._populate_tree(tree.root, tree_data)
 
+            # Restore expanded state
+            self._restore_expanded_state(tree.root)
+
         except Exception:
             pass
+
+    def _save_expanded_state(self, node: TreeNode, path: str = "") -> None:
+        """Save which nodes are expanded."""
+        if node.is_expanded:
+            self.expanded_nodes.add(path)
+
+        for child in node.children:
+            child_path = f"{path}/{child.label}" if path else child.label
+            self._save_expanded_state(child, child_path)
+
+    def _restore_expanded_state(self, node: TreeNode, path: str = "") -> None:
+        """Restore expanded state of nodes."""
+        if path in self.expanded_nodes:
+            node.expand()
+
+        for child in node.children:
+            child_path = f"{path}/{child.label}" if path else child.label
+            self._restore_expanded_state(child, child_path)
 
     def _build_tree_structure(self, keys: List[str]) -> Dict[str, Any]:
         """Build hierarchical tree structure from flat keys."""
@@ -149,3 +208,8 @@ class MemoryBrowserWidget(Horizontal):
     def refresh_tree(self) -> None:
         """Refresh the memory tree."""
         self.load_memory_tree()
+
+    def auto_refresh_tree(self) -> None:
+        """Auto-refresh the tree if enabled."""
+        if self.auto_refresh:
+            self.load_memory_tree()

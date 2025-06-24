@@ -109,12 +109,12 @@ class ClaudeCodeIntegration:
         """
         # Base APEX MCP tools
         base_tools = [
-            "apex_lmdb_read",
-            "apex_lmdb_write",
-            "apex_lmdb_list",
-            "apex_lmdb_delete",
-            "apex_lmdb_scan",
-            "apex_project_status",
+            "mcp__lmdb__read",
+            "mcp__lmdb__write",
+            "mcp__lmdb__list",
+            "mcp__lmdb__delete",
+            "mcp__lmdb__cursor_scan",
+            "mcp__lmdb__watch",
         ]
 
         # Add agent-specific tools
@@ -237,11 +237,11 @@ Tech Stack: {", ".join(self.project_config.tech_stack)}
 Features: {", ".join(self.project_config.features)}
 
 You have access to APEX MCP tools for coordination:
-- apex_lmdb_read: Read data from shared memory
-- apex_lmdb_write: Write data to shared memory
-- apex_lmdb_list: List keys with optional prefix
-- apex_lmdb_scan: Scan key-value pairs
-- apex_project_status: Get project status overview
+- mcp__lmdb__read: Read data from shared memory
+- mcp__lmdb__write: Write data to shared memory
+- mcp__lmdb__list: List keys with optional prefix
+- mcp__lmdb__cursor_scan: Scan key-value pairs efficiently
+- mcp__lmdb__watch: Watch for changes to specific keys
 
 Project ID: {self.project_config.project_id}
 

@@ -1,10 +1,80 @@
-# SDK
+# Claude Code Documentation
 
-> Programmatically integrate Claude Code into your applications using the SDK.
+This comprehensive documentation covers all aspects of Claude Code SDK, CLI usage, workflows, and development containers.
 
-The Claude Code SDK allows developers to programmatically integrate Claude Code into their applications. It enables running Claude Code as a subprocess, providing a way to build AI-powered coding assistants and tools that leverage Claude's capabilities.
+## Table of Contents
 
-The SDK currently support command line usage. TypeScript and Python SDKs are coming soon.
+1. [Claude Code SDK](#claude-code-sdk)
+   - [Authentication](#authentication)
+   - [Basic SDK Usage](#basic-sdk-usage)
+     - [Command Line](#command-line)
+     - [TypeScript](#typescript)
+     - [Python](#python)
+   - [Advanced Usage](#advanced-usage)
+     - [Multi-turn Conversations](#multi-turn-conversations)
+     - [Custom System Prompts](#custom-system-prompts)
+     - [MCP Configuration](#mcp-configuration)
+   - [Available CLI Options](#available-cli-options)
+   - [Output Formats](#output-formats)
+   - [Message Schema](#message-schema)
+   - [Input Formats](#input-formats)
+   - [Examples](#examples)
+   - [Best Practices](#best-practices)
+   - [Real-world Applications](#real-world-applications)
+
+2. [CLI Reference](#cli-reference)
+   - [CLI Commands](#cli-commands)
+   - [CLI Flags](#cli-flags)
+
+3. [Common Workflows](#common-workflows)
+   - [Understand New Codebases](#understand-new-codebases)
+   - [Fix Bugs Efficiently](#fix-bugs-efficiently)
+   - [Refactor Code](#refactor-code)
+   - [Work with Tests](#work-with-tests)
+   - [Create Pull Requests](#create-pull-requests)
+   - [Handle Documentation](#handle-documentation)
+   - [Work with Images](#work-with-images)
+   - [Reference Files and Directories](#reference-files-and-directories)
+   - [Use Extended Thinking](#use-extended-thinking)
+   - [Resume Previous Conversations](#resume-previous-conversations)
+   - [Run Parallel Sessions with Git Worktrees](#run-parallel-claude-code-sessions-with-git-worktrees)
+   - [Use Claude as Unix-style Utility](#use-claude-as-a-unix-style-utility)
+   - [Create Custom Slash Commands](#create-custom-slash-commands)
+
+4. [Development Containers](#development-containers)
+   - [Key Features](#key-features)
+   - [Getting Started](#getting-started-in-4-steps)
+   - [Configuration Breakdown](#configuration-breakdown)
+   - [Security Features](#security-features)
+   - [Customization Options](#customization-options)
+   - [Example Use Cases](#example-use-cases)
+
+5. [VS Code Development Containers](#developing-inside-a-container)
+   - [System Requirements](#system-requirements)
+   - [Installation](#installation)
+   - [Quick Start Guides](#picking-your-quick-start)
+   - [Container Configuration](#create-a-devcontainerjson-file)
+   - [Dev Container Features](#dev-container-features)
+   - [Managing Extensions](#managing-extensions)
+   - [Container Management](#managing-containers)
+
+6. [Changelog](#changelog)
+
+7. [Project Overview](#claude-code)
+
+8. [Security Policy](#security-policy)
+
+---
+
+<claude_sdk>
+
+# Claude Code SDK
+
+> Learn about programmatically integrating Claude Code into your applications with the Claude Code SDK.
+
+The Claude Code SDK enables running Claude Code as a subprocess, providing a way to build AI-powered coding assistants and tools that leverage Claude's capabilities.
+
+The SDK is available for command line, TypeScript, and Python usage.
 
 ## Authentication
 
@@ -15,7 +85,11 @@ To use the Claude Code SDK, we recommend creating a dedicated API key:
 
 ## Basic SDK usage
 
-The Claude Code SDK allows you to use Claude Code in non-interactive mode from your applications. Here's a basic example:
+The Claude Code SDK allows you to use Claude Code in non-interactive mode from your applications.
+
+### Command line
+
+Here are a few basic examples for the command line SDK:
 
 ```bash
 # Run a single prompt and exit (print mode)
@@ -31,7 +105,93 @@ $ claude -p "Generate a hello world function" --output-format json
 $ claude -p "Build a React component" --output-format stream-json
 ```
 
+### TypeScript
+
+The TypeScript SDK is included in the main [`@anthropic-ai/claude-code`](https://www.npmjs.com/package/@anthropic-ai/claude-code) package on NPM:
+
+```ts
+import { query, type SDKMessage } from "@anthropic-ai/claude-code";
+
+const messages: SDKMessage[] = [];
+
+for await (const message of query({
+  prompt: "Write a haiku about foo.py",
+  abortController: new AbortController(),
+  options: {
+    maxTurns: 3,
+  },
+})) {
+  messages.push(message);
+}
+
+console.log(messages);
+```
+
+The TypeScript SDK accepts all arguments supported by the command line SDK, as well as:
+
+| Argument                     | Description                         | Default                                                       |
+| :--------------------------- | :---------------------------------- | :------------------------------------------------------------ |
+| `abortController`            | Abort controller                    | `new AbortController()`                                       |
+| `cwd`                        | Current working directory           | `process.cwd()`                                               |
+| `executable`                 | Which JavaScript runtime to use     | `node` when running with Node.js, `bun` when running with Bun |
+| `executableArgs`             | Arguments to pass to the executable | `[]`                                                          |
+| `pathToClaudeCodeExecutable` | Path to the Claude Code executable  | Executable that ships with `@anthropic-ai/claude-code`        |
+
+### Python
+
+The Python SDK is available as [`claude-code-sdk`](https://github.com/anthropics/claude-code-sdk-python) on PyPI:
+
+```bash
+pip install claude-code-sdk
+```
+
+**Prerequisites:**
+
+* Python 3.10+
+* Node.js
+* Claude Code CLI: `npm install -g @anthropic-ai/claude-code`
+
+Basic usage:
+
+```python
+import anyio
+from claude_code_sdk import query, ClaudeCodeOptions, Message
+
+async def main():
+    messages: list[Message] = []
+
+    async for message in query(
+        prompt="Write a haiku about foo.py",
+        options=ClaudeCodeOptions(max_turns=3)
+    ):
+        messages.append(message)
+
+    print(messages)
+
+anyio.run(main)
+```
+
+The Python SDK accepts all arguments supported by the command line SDK through the `ClaudeCodeOptions` class:
+
+```python
+from claude_code_sdk import query, ClaudeCodeOptions
+from pathlib import Path
+
+options = ClaudeCodeOptions(
+    max_turns=3,
+    system_prompt="You are a helpful assistant",
+    cwd=Path("/path/to/project"),  # Can be string or Path
+    allowed_tools=["Read", "Write", "Bash"],
+    permission_mode="acceptEdits"
+)
+
+async for message in query(prompt="Hello", options=options):
+    print(message)
+```
+
 ## Advanced usage
+
+The documentation below uses the command line SDK as an example, but can also be used with the TypeScript and Python SDKs.
 
 ### Multi-turn conversations
 
@@ -120,12 +280,18 @@ $ claude -p "Deploy the application" \
   --permission-prompt-tool mcp__permissions__approve
 ```
 
-Note: When using MCP tools, you must explicitly allow them using the `--allowedTools` flag. MCP tool names follow the pattern `mcp__<serverName>__<toolName>` where:
+<Note>
+  When using MCP tools, you must explicitly allow them using the `--allowedTools` flag. MCP tool names follow the pattern `mcp__<serverName>__<toolName>` where:
 
-* `serverName` is the key from your MCP configuration file
-* `toolName` is the specific tool provided by that server
+  * `serverName` is the key from your MCP configuration file
+  * `toolName` is the specific tool provided by that server
 
-This security measure ensures that MCP tools are only used when explicitly permitted.
+  This security measure ensures that MCP tools are only used when explicitly permitted.
+
+  If you specify just the server name (i.e., `mcp__<serverName>`), all tools from that server will be allowed.
+
+  Glob patterns (e.g., `mcp__go*`) are not supported.
+</Note>
 
 ### Custom permission prompt tool
 
@@ -205,22 +371,22 @@ Usage notes:
 
 The SDK leverages all the CLI options available in Claude Code. Here are the key ones for SDK usage:
 
-| Flag                       | Description                                                      | Example                                                     |
-| :------------------------- | :--------------------------------------------------------------- | :---------------------------------------------------------- |
-| `--print`, `-p`            | Run in non-interactive mode                                      | `claude -p "query"`                                         |
-| `--output-format`          | Specify output format (`text`, `json`, `stream-json`)            | `claude -p --output-format json`                            |
-| `--resume`, `-r`           | Resume a conversation by session ID                              | `claude --resume abc123`                                    |
-| `--continue`, `-c`         | Continue the most recent conversation                            | `claude --continue`                                         |
-| `--verbose`                | Enable verbose logging                                           | `claude --verbose`                                          |
-| `--max-turns`              | Limit agentic turns in non-interactive mode                      | `claude --max-turns 3`                                      |
-| `--system-prompt`          | Override system prompt (only with `--print`)                     | `claude --system-prompt "Custom instruction"`               |
-| `--append-system-prompt`   | Append to system prompt (only with `--print`)                    | `claude --append-system-prompt "Custom instruction"`        |
-| `--allowedTools`           | Comma/space-separated list of allowed tools (includes MCP tools) | `claude --allowedTools "Bash(npm install),mcp__filesystem"` |
-| `--disallowedTools`        | Comma/space-separated list of denied tools                       | `claude --disallowedTools "Bash(git commit),mcp__github"`   |
-| `--mcp-config`             | Load MCP servers from a JSON file                                | `claude --mcp-config servers.json`                          |
-| `--permission-prompt-tool` | MCP tool for handling permission prompts (only with `--print`)   | `claude --permission-prompt-tool mcp__auth__prompt`         |
+| Flag                       | Description                                                                                            | Example                                                                                                                   |
+| :------------------------- | :----------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------ |
+| `--print`, `-p`            | Run in non-interactive mode                                                                            | `claude -p "query"`                                                                                                       |
+| `--output-format`          | Specify output format (`text`, `json`, `stream-json`)                                                  | `claude -p --output-format json`                                                                                          |
+| `--resume`, `-r`           | Resume a conversation by session ID                                                                    | `claude --resume abc123`                                                                                                  |
+| `--continue`, `-c`         | Continue the most recent conversation                                                                  | `claude --continue`                                                                                                       |
+| `--verbose`                | Enable verbose logging                                                                                 | `claude --verbose`                                                                                                        |
+| `--max-turns`              | Limit agentic turns in non-interactive mode                                                            | `claude --max-turns 3`                                                                                                    |
+| `--system-prompt`          | Override system prompt (only with `--print`)                                                           | `claude --system-prompt "Custom instruction"`                                                                             |
+| `--append-system-prompt`   | Append to system prompt (only with `--print`)                                                          | `claude --append-system-prompt "Custom instruction"`                                                                      |
+| `--allowedTools`           | Space-separated list of allowed tools, or <br /><br /> string of comma-separated list of allowed tools | `claude --allowedTools mcp__slack mcp__filesystem`<br /><br />`claude --allowedTools "Bash(npm install),mcp__filesystem"` |
+| `--disallowedTools`        | Space-separated list of denied tools, or <br /><br /> string of comma-separated list of denied tools   | `claude --disallowedTools mcp__splunk mcp__github`<br /><br />`claude --disallowedTools "Bash(git commit),mcp__github"`   |
+| `--mcp-config`             | Load MCP servers from a JSON file                                                                      | `claude --mcp-config servers.json`                                                                                        |
+| `--permission-prompt-tool` | MCP tool for handling permission prompts (only with `--print`)                                         | `claude --permission-prompt-tool mcp__auth__prompt`                                                                       |
 
-For a complete list of CLI options and features, see the [CLI usage](/en/docs/claude-code/cli-usage) documentation.
+For a complete list of CLI options and features, see the [CLI reference](/en/docs/claude-code/cli-reference) documentation.
 
 ## Output formats
 
@@ -249,7 +415,7 @@ Response format:
 {
   "type": "result",
   "subtype": "success",
-  "cost_usd": 0.003,
+  "total_cost_usd": 0.003,
   "is_error": false,
   "duration_ms": 1234,
   "duration_api_ms": 800,
@@ -293,43 +459,77 @@ type SDKMessage =
   | {
       type: "result";
       subtype: "success";
-      cost_usd: float;
       duration_ms: float;
       duration_api_ms: float;
       is_error: boolean;
       num_turns: int;
       result: string;
       session_id: string;
+      total_cost_usd: float;
     }
 
   // Emitted as the last message, when we've reached the maximum number of turns
   | {
       type: "result";
-      subtype: "error_max_turns";
-      cost_usd: float;
+      subtype: "error_max_turns" | "error_during_execution";
       duration_ms: float;
       duration_api_ms: float;
       is_error: boolean;
       num_turns: int;
       session_id: string;
+      total_cost_usd: float;
     }
 
   // Emitted as the first message at the start of a conversation
   | {
       type: "system";
       subtype: "init";
+      apiKeySource: string;
+      cwd: string;
       session_id: string;
       tools: string[];
       mcp_servers: {
         name: string;
         status: string;
       }[];
+      model: string;
+      permissionMode: "default" | "acceptEdits" | "bypassPermissions" | "plan";
     };
 ```
 
 We will soon publish these types in a JSONSchema-compatible format. We use semantic versioning for the main Claude Code package to communicate breaking changes to this format.
 
 `Message` and `MessageParam` types are available in Anthropic SDKs. For example, see the Anthropic [TypeScript](https://github.com/anthropics/anthropic-sdk-typescript) and [Python](https://github.com/anthropics/anthropic-sdk-python/) SDKs.
+
+## Input formats
+
+The SDK supports multiple input formats:
+
+### Text input (default)
+
+Input text can be provided as an argument:
+
+```bash
+$ claude -p "Explain this code"
+```
+
+Or input text can be piped via stdin:
+
+```bash
+$ echo "Explain this code" | claude -p
+```
+
+### Streaming JSON input
+
+A stream of messages provided via `stdin` where each message represents a user turn. This allows multiple turns of a conversation without re-launching the `claude` binary and allows providing guidance to the model while it is processing a request.
+
+Each message is a JSON 'User message' object, following the same format as the output message schema. Messages are formatted using the [jsonl](https://jsonlines.org/) format where each line of input is a complete JSON object. Streaming JSON input requires `-p` and `--output-format stream-json`.
+
+Currently this is limited to text-only user messages.
+
+```bash
+$ echo '{"type":"user","message":{"role":"user","content":[{"type":"text","text":"Explain this code"}]}}' | claude -p --output-format=stream-json --input-format=stream-json --verbose
+```
 
 ## Examples
 
@@ -421,67 +621,51 @@ The Claude Code SDK enables powerful integrations with your development workflow
 
 ## Related resources
 
-* [CLI usage and controls](/en/docs/claude-code/cli-usage) - Complete CLI documentation
+* [CLI usage and controls](/en/docs/claude-code/cli-reference) - Complete CLI documentation
 * [GitHub Actions integration](/en/docs/claude-code/github-actions) - Automate your GitHub workflow with Claude
-* [Tutorials](/en/docs/claude-code/tutorials) - Step-by-step guides for common use cases
+* [Common workflows](/en/docs/claude-code/common-workflows) - Step-by-step guides for common use cases
 
+</claude_sdk>
 
-# CLI usage and controls
+<cli_reference>
 
-> Learn how to use Claude Code from the command line, including CLI commands, flags, and slash commands.
+# CLI reference
 
-## Getting started
-
-Claude Code provides two main ways to interact:
-
-* **Interactive mode**: Run `claude` to start a REPL session
-* **One-shot mode**: Use `claude -p "query"` for quick commands
-
-```bash
-# Start interactive mode
-claude
-
-# Start with an initial query
-claude "explain this project"
-
-# Run a single command and exit
-claude -p "what does this function do?"
-
-# Process piped content
-cat logs.txt | claude -p "analyze these errors"
-```
+> Complete reference for Claude Code command-line interface, including commands and flags.
 
 ## CLI commands
 
-| Command                            | Description                              | Example                                                                                          |
-| :--------------------------------- | :--------------------------------------- | :----------------------------------------------------------------------------------------------- |
-| `claude`                           | Start interactive REPL                   | `claude`                                                                                         |
-| `claude "query"`                   | Start REPL with initial prompt           | `claude "explain this project"`                                                                  |
-| `claude -p "query"`                | Run one-off query, then exit             | `claude -p "explain this function"`                                                              |
-| `cat file \| claude -p "query"`    | Process piped content                    | `cat logs.txt \| claude -p "explain"`                                                            |
-| `claude -c`                        | Continue most recent conversation        | `claude -c`                                                                                      |
-| `claude -c -p "query"`             | Continue in print mode                   | `claude -c -p "Check for type errors"`                                                           |
-| `claude -r "<session-id>" "query"` | Resume session by ID                     | `claude -r "abc123" "Finish this PR"`                                                            |
-| `claude update`                    | Update to latest version                 | `claude update`                                                                                  |
-| `claude mcp`                       | Configure Model Context Protocol servers | [See MCP section in tutorials](/en/docs/claude-code/tutorials#set-up-model-context-protocol-mcp) |
+| Command                            | Description                                    | Example                                                            |
+| :--------------------------------- | :--------------------------------------------- | :----------------------------------------------------------------- |
+| `claude`                           | Start interactive REPL                         | `claude`                                                           |
+| `claude "query"`                   | Start REPL with initial prompt                 | `claude "explain this project"`                                    |
+| `claude -p "query"`                | Query via SDK, then exit                       | `claude -p "explain this function"`                                |
+| `cat file \| claude -p "query"`    | Process piped content                          | `cat logs.txt \| claude -p "explain"`                              |
+| `claude -c`                        | Continue most recent conversation              | `claude -c`                                                        |
+| `claude -c -p "query"`             | Continue via SDK                               | `claude -c -p "Check for type errors"`                             |
+| `claude -r "<session-id>" "query"` | Resume session by ID                           | `claude -r "abc123" "Finish this PR"`                              |
+| `claude update`                    | Update to latest version                       | `claude update`                                                    |
+| `claude mcp`                       | Configure Model Context Protocol (MCP) servers | See the [Claude Code MCP documentation](/en/docs/claude-code/mcp). |
 
 ## CLI flags
 
 Customize Claude Code's behavior with these command-line flags:
 
-| Flag                             | Description                                                                                                                                              | Example                                                    |
-| :------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------- |
-| `--allowedTools`                 | A list of tools that should be allowed without prompting the user for permission, in addition to [settings.json files](/en/docs/claude-code/settings)    | `"Bash(git log:*)" "Bash(git diff:*)" "Write"`             |
-| `--disallowedTools`              | A list of tools that should be disallowed without prompting the user for permission, in addition to [settings.json files](/en/docs/claude-code/settings) | `"Bash(git log:*)" "Bash(git diff:*)" "Write"`             |
-| `--print`, `-p`                  | Print response without interactive mode (see [SDK documentation](/en/docs/claude-code/sdk) for programmatic usage details)                               | `claude -p "query"`                                        |
-| `--output-format`                | Specify output format for print mode (options: `text`, `json`, `stream-json`)                                                                            | `claude -p "query" --output-format json`                   |
-| `--verbose`                      | Enable verbose logging, shows full turn-by-turn output (helpful for debugging in both print and interactive modes)                                       | `claude --verbose`                                         |
-| `--max-turns`                    | Limit the number of agentic turns in non-interactive mode                                                                                                | `claude -p --max-turns 3 "query"`                          |
-| `--model`                        | Sets the model for the current session with an alias for the latest model (`sonnet` or `opus`) or a model's full name                                    | `claude --model claude-sonnet-4-20250514`                  |
-| `--permission-prompt-tool`       | Specify an MCP tool to handle permission prompts in non-interactive mode                                                                                 | `claude -p --permission-prompt-tool mcp_auth_tool "query"` |
-| `--resume`                       | Resume a specific session by ID, or by choosing in interactive mode                                                                                      | `claude --resume abc123 "query"`                           |
-| `--continue`                     | Load the most recent conversation in the current directory                                                                                               | `claude --continue`                                        |
-| `--dangerously-skip-permissions` | Skip permission prompts (use with caution)                                                                                                               | `claude --dangerously-skip-permissions`                    |
+| Flag                             | Description                                                                                                                                              | Example                                                     |
+| :------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
+| `--add-dir`                      | Add additional working directories for Claude to access (validates each path exists as a directory)                                                      | `claude --add-dir ../apps ../lib`                           |
+| `--allowedTools`                 | A list of tools that should be allowed without prompting the user for permission, in addition to [settings.json files](/en/docs/claude-code/settings)    | `"Bash(git log:*)" "Bash(git diff:*)" "Write"`              |
+| `--disallowedTools`              | A list of tools that should be disallowed without prompting the user for permission, in addition to [settings.json files](/en/docs/claude-code/settings) | `"Bash(git log:*)" "Bash(git diff:*)" "Write"`              |
+| `--print`, `-p`                  | Print response without interactive mode (see [SDK documentation](/en/docs/claude-code/sdk) for programmatic usage details)                               | `claude -p "query"`                                         |
+| `--output-format`                | Specify output format for print mode (options: `text`, `json`, `stream-json`)                                                                            | `claude -p "query" --output-format json`                    |
+| `--input-format`                 | Specify input format for print mode (options: `text`, `stream-json`)                                                                                     | `claude -p --output-format json --input-format stream-json` |
+| `--verbose`                      | Enable verbose logging, shows full turn-by-turn output (helpful for debugging in both print and interactive modes)                                       | `claude --verbose`                                          |
+| `--max-turns`                    | Limit the number of agentic turns in non-interactive mode                                                                                                | `claude -p --max-turns 3 "query"`                           |
+| `--model`                        | Sets the model for the current session with an alias for the latest model (`sonnet` or `opus`) or a model's full name                                    | `claude --model claude-sonnet-4-20250514`                   |
+| `--permission-prompt-tool`       | Specify an MCP tool to handle permission prompts in non-interactive mode                                                                                 | `claude -p --permission-prompt-tool mcp_auth_tool "query"`  |
+| `--resume`                       | Resume a specific session by ID, or by choosing in interactive mode                                                                                      | `claude --resume abc123 "query"`                            |
+| `--continue`                     | Load the most recent conversation in the current directory                                                                                               | `claude --continue`                                         |
+| `--dangerously-skip-permissions` | Skip permission prompts (use with caution)                                                                                                               | `claude --dangerously-skip-permissions`                     |
 
 <Tip>
   The `--output-format json` flag is particularly useful for scripting and
@@ -492,75 +676,1968 @@ For detailed information about print mode (`-p`) including output formats,
 streaming, verbose logging, and programmatic usage, see the
 [SDK documentation](/en/docs/claude-code/sdk).
 
-## Slash commands
+## See also
 
-Control Claude's behavior during an interactive session:
+* [Interactive mode](/en/docs/claude-code/interactive-mode) - Shortcuts, input modes, and interactive features
+* [Slash commands](/en/docs/claude-code/slash-commands) - Interactive session commands
+* [Quickstart guide](/en/docs/claude-code/quickstart) - Getting started with Claude Code
+* [Common workflows](/en/docs/claude-code/common-workflows) - Advanced workflows and patterns
+* [Settings](/en/docs/claude-code/settings) - Configuration options
+* [SDK documentation](/en/docs/claude-code/sdk) - Programmatic usage and integrations
 
-| Command                   | Purpose                                                               |
-| :------------------------ | :-------------------------------------------------------------------- |
-| `/bug`                    | Report bugs (sends conversation to Anthropic)                         |
-| `/clear`                  | Clear conversation history                                            |
-| `/compact [instructions]` | Compact conversation with optional focus instructions                 |
-| `/config`                 | View/modify configuration                                             |
-| `/cost`                   | Show token usage statistics                                           |
-| `/doctor`                 | Checks the health of your Claude Code installation                    |
-| `/help`                   | Get usage help                                                        |
-| `/init`                   | Initialize project with CLAUDE.md guide                               |
-| `/login`                  | Switch Anthropic accounts                                             |
-| `/logout`                 | Sign out from your Anthropic account                                  |
-| `/memory`                 | Edit CLAUDE.md memory files                                           |
-| `/model`                  | Select or change the AI model                                         |
-| `/permissions`            | View or update [permissions](settings#permissions)                    |
-| `/pr_comments`            | View pull request comments                                            |
-| `/review`                 | Request code review                                                   |
-| `/status`                 | View account and system statuses                                      |
-| `/terminal-setup`         | Install Shift+Enter key binding for newlines (iTerm2 and VSCode only) |
-| `/vim`                    | Enter vim mode for alternating insert and command modes               |
+</cli_reference>
 
-## Special shortcuts
+<common_workflows>
 
-### Quick memory with `#`
+# Common workflows
 
-Add memories instantly by starting your input with `#`:
+> Learn about common workflows with Claude Code.
+
+Each task in this document includes clear instructions, example commands, and best practices to help you get the most from Claude Code.
+
+## Understand new codebases
+
+### Get a quick codebase overview
+
+Suppose you've just joined a new project and need to understand its structure quickly.
+
+<Steps>
+  <Step title="Navigate to the project root directory">
+    ```bash
+    cd /path/to/project
+    ```
+  </Step>
+
+  <Step title="Start Claude Code">
+    ```bash
+    claude
+    ```
+  </Step>
+
+  <Step title="Ask for a high-level overview">
+    ```
+    > give me an overview of this codebase
+    ```
+  </Step>
+
+  <Step title="Dive deeper into specific components">
+    ```
+    > explain the main architecture patterns used here
+    ```
+
+    ```
+    > what are the key data models?
+    ```
+
+    ```
+    > how is authentication handled?
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Start with broad questions, then narrow down to specific areas
+  * Ask about coding conventions and patterns used in the project
+  * Request a glossary of project-specific terms
+</Tip>
+
+### Find relevant code
+
+Suppose you need to locate code related to a specific feature or functionality.
+
+<Steps>
+  <Step title="Ask Claude to find relevant files">
+    ```
+    > find the files that handle user authentication
+    ```
+  </Step>
+
+  <Step title="Get context on how components interact">
+    ```
+    > how do these authentication files work together?
+    ```
+  </Step>
+
+  <Step title="Understand the execution flow">
+    ```
+    > trace the login process from front-end to database
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Be specific about what you're looking for
+  * Use domain language from the project
+</Tip>
+
+***
+
+## Fix bugs efficiently
+
+Suppose you've encountered an error message and need to find and fix its source.
+
+<Steps>
+  <Step title="Share the error with Claude">
+    ```
+    > I'm seeing an error when I run npm test
+    ```
+  </Step>
+
+  <Step title="Ask for fix recommendations">
+    ```
+    > suggest a few ways to fix the @ts-ignore in user.ts
+    ```
+  </Step>
+
+  <Step title="Apply the fix">
+    ```
+    > update user.ts to add the null check you suggested
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Tell Claude the command to reproduce the issue and get a stack trace
+  * Mention any steps to reproduce the error
+  * Let Claude know if the error is intermittent or consistent
+</Tip>
+
+***
+
+## Refactor code
+
+Suppose you need to update old code to use modern patterns and practices.
+
+<Steps>
+  <Step title="Identify legacy code for refactoring">
+    ```
+    > find deprecated API usage in our codebase
+    ```
+  </Step>
+
+  <Step title="Get refactoring recommendations">
+    ```
+    > suggest how to refactor utils.js to use modern JavaScript features
+    ```
+  </Step>
+
+  <Step title="Apply the changes safely">
+    ```
+    > refactor utils.js to use ES2024 features while maintaining the same behavior
+    ```
+  </Step>
+
+  <Step title="Verify the refactoring">
+    ```
+    > run tests for the refactored code
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Ask Claude to explain the benefits of the modern approach
+  * Request that changes maintain backward compatibility when needed
+  * Do refactoring in small, testable increments
+</Tip>
+
+***
+
+## Work with tests
+
+Suppose you need to add tests for uncovered code.
+
+<Steps>
+  <Step title="Identify untested code">
+    ```
+    > find functions in NotificationsService.swift that are not covered by tests
+    ```
+  </Step>
+
+  <Step title="Generate test scaffolding">
+    ```
+    > add tests for the notification service
+    ```
+  </Step>
+
+  <Step title="Add meaningful test cases">
+    ```
+    > add test cases for edge conditions in the notification service
+    ```
+  </Step>
+
+  <Step title="Run and verify tests">
+    ```
+    > run the new tests and fix any failures
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Ask for tests that cover edge cases and error conditions
+  * Request both unit and integration tests when appropriate
+  * Have Claude explain the testing strategy
+</Tip>
+
+***
+
+## Create pull requests
+
+Suppose you need to create a well-documented pull request for your changes.
+
+<Steps>
+  <Step title="Summarize your changes">
+    ```
+    > summarize the changes I've made to the authentication module
+    ```
+  </Step>
+
+  <Step title="Generate a PR with Claude">
+    ```
+    > create a pr
+    ```
+  </Step>
+
+  <Step title="Review and refine">
+    ```
+    > enhance the PR description with more context about the security improvements
+    ```
+  </Step>
+
+  <Step title="Add testing details">
+    ```
+    > add information about how these changes were tested
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Ask Claude directly to make a PR for you
+  * Review Claude's generated PR before submitting
+  * Ask Claude to highlight potential risks or considerations
+</Tip>
+
+## Handle documentation
+
+Suppose you need to add or update documentation for your code.
+
+<Steps>
+  <Step title="Identify undocumented code">
+    ```
+    > find functions without proper JSDoc comments in the auth module
+    ```
+  </Step>
+
+  <Step title="Generate documentation">
+    ```
+    > add JSDoc comments to the undocumented functions in auth.js
+    ```
+  </Step>
+
+  <Step title="Review and enhance">
+    ```
+    > improve the generated documentation with more context and examples
+    ```
+  </Step>
+
+  <Step title="Verify documentation">
+    ```
+    > check if the documentation follows our project standards
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Specify the documentation style you want (JSDoc, docstrings, etc.)
+  * Ask for examples in the documentation
+  * Request documentation for public APIs, interfaces, and complex logic
+</Tip>
+
+***
+
+## Work with images
+
+Suppose you need to work with images in your codebase, and you want Claude's help analyzing image content.
+
+<Steps>
+  <Step title="Add an image to the conversation">
+    You can use any of these methods:
+
+    1. Drag and drop an image into the Claude Code window
+    2. Copy an image and paste it into the CLI with ctrl+v (Do not use cmd+v)
+    3. Provide an image path to Claude. E.g., "Analyze this image: /path/to/your/image.png"
+  </Step>
+
+  <Step title="Ask Claude to analyze the image">
+    ```
+    > What does this image show?
+    ```
+
+    ```
+    > Describe the UI elements in this screenshot
+    ```
+
+    ```
+    > Are there any problematic elements in this diagram?
+    ```
+  </Step>
+
+  <Step title="Use images for context">
+    ```
+    > Here's a screenshot of the error. What's causing it?
+    ```
+
+    ```
+    > This is our current database schema. How should we modify it for the new feature?
+    ```
+  </Step>
+
+  <Step title="Get code suggestions from visual content">
+    ```
+    > Generate CSS to match this design mockup
+    ```
+
+    ```
+    > What HTML structure would recreate this component?
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Use images when text descriptions would be unclear or cumbersome
+  * Include screenshots of errors, UI designs, or diagrams for better context
+  * You can work with multiple images in a conversation
+  * Image analysis works with diagrams, screenshots, mockups, and more
+</Tip>
+
+***
+
+## Reference files and directories
+
+Use @ to quickly include files or directories without waiting for Claude to read them.
+
+<Steps>
+  <Step title="Reference a single file">
+    ```
+    > Explain the logic in @src/utils/auth.js
+    ```
+
+    This includes the full content of the file in the conversation.
+  </Step>
+
+  <Step title="Reference a directory">
+    ```
+    > What's the structure of @src/components?
+    ```
+
+    This provides a directory listing with file information.
+  </Step>
+
+  <Step title="Reference MCP resources">
+    ```
+    > Show me the data from @github:repos/owner/repo/issues
+    ```
+
+    This fetches data from connected MCP servers using the format @server:resource. See [MCP resources](/en/docs/claude-code/mcp#use-mcp-resources) for details.
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * File paths can be relative or absolute
+  * @ file references add CLAUDE.md in the file's directory and parent directories to context
+  * Directory references show file listings, not contents
+  * You can reference multiple files in a single message (e.g., "@file1.js and @file2.js")
+</Tip>
+
+***
+
+## Use extended thinking
+
+Suppose you're working on complex architectural decisions, challenging bugs, or planning multi-step implementations that require deep reasoning.
+
+<Steps>
+  <Step title="Provide context and ask Claude to think">
+    ```
+    > I need to implement a new authentication system using OAuth2 for our API. Think deeply about the best approach for implementing this in our codebase.
+    ```
+
+    Claude will gather relevant information from your codebase and
+    use extended thinking, which will be visible in the interface.
+  </Step>
+
+  <Step title="Refine the thinking with follow-up prompts">
+    ```
+    > think about potential security vulnerabilities in this approach
+    ```
+
+    ```
+    > think harder about edge cases we should handle
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips to get the most value out of extended thinking:
+
+  Extended thinking is most valuable for complex tasks such as:
+
+  * Planning complex architectural changes
+  * Debugging intricate issues
+  * Creating implementation plans for new features
+  * Understanding complex codebases
+  * Evaluating tradeoffs between different approaches
+
+  The way you prompt for thinking results in varying levels of thinking depth:
+
+  * "think" triggers basic extended thinking
+  * intensifying phrases such as "think more", "think a lot", "think harder", or "think longer" triggers deeper thinking
+
+  For more extended thinking prompting tips, see [Extended thinking tips](/en/docs/build-with-claude/prompt-engineering/extended-thinking-tips).
+</Tip>
+
+<Note>
+  Claude will display its thinking process as italic gray text above the
+  response.
+</Note>
+
+***
+
+## Resume previous conversations
+
+Suppose you've been working on a task with Claude Code and need to continue where you left off in a later session.
+
+Claude Code provides two options for resuming previous conversations:
+
+* `--continue` to automatically continue the most recent conversation
+* `--resume` to display a conversation picker
+
+<Steps>
+  <Step title="Continue the most recent conversation">
+    ```bash
+    claude --continue
+    ```
+
+    This immediately resumes your most recent conversation without any prompts.
+  </Step>
+
+  <Step title="Continue in non-interactive mode">
+    ```bash
+    claude --continue --print "Continue with my task"
+    ```
+
+    Use `--print` with `--continue` to resume the most recent conversation in non-interactive mode, perfect for scripts or automation.
+  </Step>
+
+  <Step title="Show conversation picker">
+    ```bash
+    claude --resume
+    ```
+
+    This displays an interactive conversation selector showing:
+
+    * Conversation start time
+    * Initial prompt or conversation summary
+    * Message count
+
+    Use arrow keys to navigate and press Enter to select a conversation.
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Conversation history is stored locally on your machine
+  * Use `--continue` for quick access to your most recent conversation
+  * Use `--resume` when you need to select a specific past conversation
+  * When resuming, you'll see the entire conversation history before continuing
+  * The resumed conversation starts with the same model and configuration as the original
+
+  How it works:
+
+  1. **Conversation Storage**: All conversations are automatically saved locally with their full message history
+  2. **Message Deserialization**: When resuming, the entire message history is restored to maintain context
+  3. **Tool State**: Tool usage and results from the previous conversation are preserved
+  4. **Context Restoration**: The conversation resumes with all previous context intact
+
+  Examples:
+
+  ```bash
+  # Continue most recent conversation
+  claude --continue
+
+  # Continue most recent conversation with a specific prompt
+  claude --continue --print "Show me our progress"
+
+  # Show conversation picker
+  claude --resume
+
+  # Continue most recent conversation in non-interactive mode
+  claude --continue --print "Run the tests again"
+  ```
+</Tip>
+
+***
+
+## Run parallel Claude Code sessions with Git worktrees
+
+Suppose you need to work on multiple tasks simultaneously with complete code isolation between Claude Code instances.
+
+<Steps>
+  <Step title="Understand Git worktrees">
+    Git worktrees allow you to check out multiple branches from the same
+    repository into separate directories. Each worktree has its own working
+    directory with isolated files, while sharing the same Git history. Learn
+    more in the [official Git worktree
+    documentation](https://git-scm.com/docs/git-worktree).
+  </Step>
+
+  <Step title="Create a new worktree">
+    ```bash
+    # Create a new worktree with a new branch
+    git worktree add ../project-feature-a -b feature-a
+
+    # Or create a worktree with an existing branch
+    git worktree add ../project-bugfix bugfix-123
+    ```
+
+    This creates a new directory with a separate working copy of your repository.
+  </Step>
+
+  <Step title="Run Claude Code in each worktree">
+    ```bash
+    # Navigate to your worktree
+    cd ../project-feature-a
+
+    # Run Claude Code in this isolated environment
+    claude
+    ```
+  </Step>
+
+  <Step title="Run Claude in another worktree">
+    ```bash
+    cd ../project-bugfix
+    claude
+    ```
+  </Step>
+
+  <Step title="Manage your worktrees">
+    ```bash
+    # List all worktrees
+    git worktree list
+
+    # Remove a worktree when done
+    git worktree remove ../project-feature-a
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Each worktree has its own independent file state, making it perfect for parallel Claude Code sessions
+  * Changes made in one worktree won't affect others, preventing Claude instances from interfering with each other
+  * All worktrees share the same Git history and remote connections
+  * For long-running tasks, you can have Claude working in one worktree while you continue development in another
+  * Use descriptive directory names to easily identify which task each worktree is for
+  * Remember to initialize your development environment in each new worktree according to your project's setup. Depending on your stack, this might include:
+    * JavaScript projects: Running dependency installation (`npm install`, `yarn`)
+    * Python projects: Setting up virtual environments or installing with package managers
+    * Other languages: Following your project's standard setup process
+</Tip>
+
+***
+
+## Use Claude as a unix-style utility
+
+### Add Claude to your verification process
+
+Suppose you want to use Claude Code as a linter or code reviewer.
+
+**Add Claude to your build script:**
+
+```json
+// package.json
+{
+    ...
+    "scripts": {
+        ...
+        "lint:claude": "claude -p 'you are a linter. please look at the changes vs. main and report any issues related to typos. report the filename and line number on one line, and a description of the issue on the second line. do not return any other text.'"
+    }
+}
+```
+
+<Tip>
+  Tips:
+
+  * Use Claude for automated code review in your CI/CD pipeline
+  * Customize the prompt to check for specific issues relevant to your project
+  * Consider creating multiple scripts for different types of verification
+</Tip>
+
+### Pipe in, pipe out
+
+Suppose you want to pipe data into Claude, and get back data in a structured format.
+
+**Pipe data through Claude:**
+
+```bash
+cat build-error.txt | claude -p 'concisely explain the root cause of this build error' > output.txt
+```
+
+<Tip>
+  Tips:
+
+  * Use pipes to integrate Claude into existing shell scripts
+  * Combine with other Unix tools for powerful workflows
+  * Consider using --output-format for structured output
+</Tip>
+
+### Control output format
+
+Suppose you need Claude's output in a specific format, especially when integrating Claude Code into scripts or other tools.
+
+<Steps>
+  <Step title="Use text format (default)">
+    ```bash
+    cat data.txt | claude -p 'summarize this data' --output-format text > summary.txt
+    ```
+
+    This outputs just Claude's plain text response (default behavior).
+  </Step>
+
+  <Step title="Use JSON format">
+    ```bash
+    cat code.py | claude -p 'analyze this code for bugs' --output-format json > analysis.json
+    ```
+
+    This outputs a JSON array of messages with metadata including cost and duration.
+  </Step>
+
+  <Step title="Use streaming JSON format">
+    ```bash
+    cat log.txt | claude -p 'parse this log file for errors' --output-format stream-json
+    ```
+
+    This outputs a series of JSON objects in real-time as Claude processes the request. Each message is a valid JSON object, but the entire output is not valid JSON if concatenated.
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Use `--output-format text` for simple integrations where you just need Claude's response
+  * Use `--output-format json` when you need the full conversation log
+  * Use `--output-format stream-json` for real-time output of each conversation turn
+</Tip>
+
+***
+
+## Create custom slash commands
+
+Claude Code supports custom slash commands that you can create to quickly execute specific prompts or tasks.
+
+For more details, see the [Slash commands](/en/docs/claude-code/slash-commands) reference page.
+
+### Create project-specific commands
+
+Suppose you want to create reusable slash commands for your project that all team members can use.
+
+<Steps>
+  <Step title="Create a commands directory in your project">
+    ```bash
+    mkdir -p .claude/commands
+    ```
+  </Step>
+
+  <Step title="Create a Markdown file for each command">
+    ```bash
+    echo "Analyze the performance of this code and suggest three specific optimizations:" > .claude/commands/optimize.md
+    ```
+  </Step>
+
+  <Step title="Use your custom command in Claude Code">
+    ```
+    > /project:optimize
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Command names are derived from the filename (e.g., `optimize.md` becomes `/project:optimize`)
+  * You can organize commands in subdirectories (e.g., `.claude/commands/frontend/component.md` becomes `/project:frontend:component`)
+  * Project commands are available to everyone who clones the repository
+  * The Markdown file content becomes the prompt sent to Claude when the command is invoked
+</Tip>
+
+### Add command arguments with \$ARGUMENTS
+
+Suppose you want to create flexible slash commands that can accept additional input from users.
+
+<Steps>
+  <Step title="Create a command file with the $ARGUMENTS placeholder">
+    ```bash
+    echo "Find and fix issue #$ARGUMENTS. Follow these steps: 1.
+    Understand the issue described in the ticket 2. Locate the relevant code in
+    our codebase 3. Implement a solution that addresses the root cause 4. Add
+    appropriate tests 5. Prepare a concise PR description" >
+    .claude/commands/fix-issue.md
+    ```
+  </Step>
+
+  <Step title="Use the command with an issue number">
+    In your Claude session, use the command with arguments.
+
+    ```
+    > /project:fix-issue 123
+    ```
+
+    This will replace \$ARGUMENTS with "123" in the prompt.
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * The \$ARGUMENTS placeholder is replaced with any text that follows the command
+  * You can position \$ARGUMENTS anywhere in your command template
+  * Other useful applications: generating test cases for specific functions, creating documentation for components, reviewing code in particular files, or translating content to specified languages
+</Tip>
+
+### Create personal slash commands
+
+Suppose you want to create personal slash commands that work across all your projects.
+
+<Steps>
+  <Step title="Create a commands directory in your home folder">
+    ```bash
+    mkdir -p ~/.claude/commands
+    ```
+  </Step>
+
+  <Step title="Create a Markdown file for each command">
+    ```bash
+    echo "Review this code for security vulnerabilities, focusing on:" >
+    ~/.claude/commands/security-review.md
+    ```
+  </Step>
+
+  <Step title="Use your personal custom command">
+    ```
+    > /user:security-review
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  Tips:
+
+  * Personal commands are prefixed with `/user:` instead of `/project:`
+  * Personal commands are only available to you and not shared with your team
+  * Personal commands work across all your projects
+  * You can use these for consistent workflows across different codebases
+</Tip>
+
+***
+
+## Next steps
+
+<Card title="Claude Code reference implementation" icon="code" href="https://github.com/anthropics/claude-code/tree/main/.devcontainer">
+  Clone our development container reference implementation.
+</Card>
+
+</common_workflows>
+
+<development_containers>
+
+# Development containers
+
+> Learn about the Claude Code development container for teams that need consistent, secure environments.
+
+The preconfigured [devcontainer setup](https://code.visualstudio.com/docs/devcontainers/containers) works seamlessly with VS Code's Remote - Containers extension and similar tools.
+
+The container's enhanced security measures (isolation and firewall rules) allow you to run `claude --dangerously-skip-permissions` to bypass permission prompts for unattended operation. We've included a [reference implementation](https://github.com/anthropics/claude-code/tree/main/.devcontainer) that you can customize for your needs.
+
+<Warning>
+  While the devcontainer provides substantial protections, no system is
+  completely immune to all attacks. Always maintain good security practices and
+  monitor Claude's activities.
+</Warning>
+
+## Key features
+
+* **Production-ready Node.js**: Built on Node.js 20 with essential development dependencies
+* **Security by design**: Custom firewall restricting network access to only necessary services
+* **Developer-friendly tools**: Includes git, ZSH with productivity enhancements, fzf, and more
+* **Seamless VS Code integration**: Pre-configured extensions and optimized settings
+* **Session persistence**: Preserves command history and configurations between container restarts
+* **Works everywhere**: Compatible with macOS, Windows, and Linux development environments
+
+## Getting started in 4 steps
+
+1. Install VS Code and the Remote - Containers extension
+2. Clone the [Claude Code reference implementation](https://github.com/anthropics/claude-code/tree/main/.devcontainer) repository
+3. Open the repository in VS Code
+4. When prompted, click "Reopen in Container" (or use Command Palette: Cmd+Shift+P → "Remote-Containers: Reopen in Container")
+
+## Configuration breakdown
+
+The devcontainer setup consists of three primary components:
+
+* [**devcontainer.json**](https://github.com/anthropics/claude-code/blob/main/.devcontainer/devcontainer.json): Controls container settings, extensions, and volume mounts
+* [**Dockerfile**](https://github.com/anthropics/claude-code/blob/main/.devcontainer/Dockerfile): Defines the container image and installed tools
+* [**init-firewall.sh**](https://github.com/anthropics/claude-code/blob/main/.devcontainer/init-firewall.sh): Establishes network security rules
+
+## Security features
+
+The container implements a multi-layered security approach with its firewall configuration:
+
+* **Precise access control**: Restricts outbound connections to whitelisted domains only (npm registry, GitHub, Anthropic API, etc.)
+* **Default-deny policy**: Blocks all other external network access
+* **Startup verification**: Validates firewall rules when the container initializes
+* **Isolation**: Creates a secure development environment separated from your main system
+
+## Customization options
+
+The devcontainer configuration is designed to be adaptable to your needs:
+
+* Add or remove VS Code extensions based on your workflow
+* Modify resource allocations for different hardware environments
+* Adjust network access permissions
+* Customize shell configurations and developer tooling
+
+## Example use cases
+
+### Secure client work
+
+Use devcontainers to isolate different client projects, ensuring code and credentials never mix between environments.
+
+### Team onboarding
+
+New team members can get a fully configured development environment in minutes, with all necessary tools and settings pre-installed.
+
+### Consistent CI/CD environments
+
+Mirror your devcontainer configuration in CI/CD pipelines to ensure development and production environments match.
+
+## Related resources
+
+* [VS Code devcontainers documentation](https://code.visualstudio.com/docs/devcontainers/containers)
+* [Claude Code security best practices](/en/docs/claude-code/security)
+* [Corporate proxy configuration](/en/docs/claude-code/corporate-proxy)
+
+---
+ContentId: 7ec8a02b-2eb7-45c1-bb16-ddeaac694ff6
+MetaDescription: Developing inside a Container using Visual Studio Code Remote Development
+DateApproved: 06/12/2025
+---
+# Developing inside a Container
+
+The **Visual Studio Code Dev Containers** extension lets you use a container as a full-featured development environment. It allows you to open any folder inside (or mounted into) a container and take advantage of Visual Studio Code's full feature set. A [devcontainer.json file](#create-a-devcontainerjson-file) in your project tells VS Code how to access (or create) a **development container** with a well-defined tool and runtime stack. This container can be used to run an application or to separate tools, libraries, or runtimes needed for working with a codebase.
+
+Workspace files are mounted from the local file system or copied or cloned into the container. Extensions are installed and run inside the container, where they have full access to the tools, platform, and file system. This means that you can seamlessly switch your entire development environment just by connecting to a different container.
+
+![Container Architecture](images/containers/architecture-containers.png)
+
+This lets VS Code provide a **local-quality development experience** including full IntelliSense (completions), code navigation, and debugging **regardless of where your tools (or code) are located**.
+
+The Dev Containers extension supports two primary operating models:
+
+* You can use a container as your full-time development environment
+* You can [attach to a running container](/docs/devcontainers/attach-container.md) to inspect it.
+
+> **Note**: The Dev Containers extension supports the open Dev Containers Specification, which empowers anyone in any tool to configure a consistent dev environment. You can learn more in our [dev container FAQ](/docs/devcontainers/faq.md#can-i-use-dev-containers-outside-of-vs-code) and on the specification's site [containers.dev](https://containers.dev/).
+
+## Getting started
+
+> **Note**: You can learn how to get up-and-running quickly with dev containers in the introductory [Dev Containers tutorial](/docs/devcontainers/tutorial.md).
+
+### System requirements
+
+**Local / Remote Host:**
+
+You can use Docker with the Dev Containers extension in a few ways, including:
+
+* Docker installed locally.
+* Docker installed on a remote environment.
+* Other Docker compliant CLIs, installed locally or remotely.
+  * While other CLIs may work, they are not officially supported. Note that [attaching to a Kubernetes cluster](/docs/devcontainers/attach-container.md#attach-to-a-container-in-a-kubernetes-cluster) only requires a properly configured [kubectl CLI](https://kubernetes.io/docs/reference/kubectl/overview/).
+
+You can learn more in the [alternative Docker options doc](/remote/advancedcontainers/docker-options.md).
+
+Below are some specific ways you can configure Docker on a local or remote host:
+
+* **Windows:** [Docker Desktop](https://www.docker.com/products/docker-desktop) 2.0+ on Windows 10 Pro/Enterprise. Windows 10 Home (2004+) requires Docker Desktop 2.3+ and the [WSL 2 back-end](https://aka.ms/vscode-remote/containers/docker-wsl2). (Docker Toolbox is not supported. Windows container images are not supported.)
+* **macOS**:  [Docker Desktop](https://www.docker.com/products/docker-desktop) 2.0+.
+* **Linux**: [Docker CE/EE](https://docs.docker.com/install/#supported-platforms) 18.06+ and [Docker Compose](https://docs.docker.com/compose/install) 1.21+. (The Ubuntu snap package is not supported.)
+* **Remote hosts:** 1 GB RAM is required, but at least 2 GB RAM and a 2-core CPU is recommended.
+
+**Containers**:
+
+* x86_64 / ARMv7l (AArch32) / ARMv8l (AArch64) Debian 9+, Ubuntu 16.04+, CentOS / RHEL 7+
+* x86_64 Alpine Linux 3.9+
+
+Other `glibc` based Linux containers may work if they have [needed Linux prerequisites](/docs/remote/linux.md).
+
+### Installation
+
+To get started, follow these steps:
+
+1. Install and configure [Docker](https://www.docker.com/get-started) for your operating system, using one of the paths below or an [alternative Docker option](/remote/advancedcontainers/docker-options.md), like Docker on a remote host or Docker compliant CLI.
+
+    **Windows / macOS**:
+
+    1. Install [Docker Desktop for Windows/Mac](https://www.docker.com/products/docker-desktop).
+
+    2. If you are using WSL 2 on Windows, to ensure the [WSL 2 back-end](https://aka.ms/vscode-remote/containers/docker-wsl2) is enabled: Right-click on the Docker taskbar item and select **Settings**. Check **Use the WSL 2 based engine** and verify your distribution is enabled under **Resources > WSL Integration**.
+
+    3. When not using the WSL 2 back-end, right-click on the Docker task bar item, select **Settings** and update **Resources > File Sharing** with any locations your source code is kept. See [tips and tricks](/docs/devcontainers/tips-and-tricks.md) for troubleshooting.
+
+    **Linux**:
+
+    1. Follow the [official install instructions for Docker CE/EE for your distribution](https://docs.docker.com/install/#supported-platforms). If you are using Docker Compose, follow the [Docker Compose directions](https://docs.docker.com/compose/install/) as well.
+
+    2. Add your user to the `docker` group by using a terminal to run: `sudo usermod -aG docker $USER`
+
+    3. Sign out and back in again so your changes take effect.
+
+2. Install [Visual Studio Code](https://code.visualstudio.com/) or [Visual Studio Code Insiders](https://code.visualstudio.com/insiders/).
+
+3. Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers). If you plan to work with other remote extensions in VS Code, you may choose to install the [Remote Development extension pack](https://aka.ms/vscode-remote/download/extension).
+
+### Working with Git?
+
+Here are two tips to consider:
+
+* If you are working with the same repository both locally in Windows and inside a container, be sure to set up consistent line endings. See [tips and tricks](/docs/remote/troubleshooting.md#resolving-git-line-ending-issues-in-wsl-resulting-in-many-modified-files) for details.
+* If you clone using a Git credential manager, your container should already have access to your credentials! If you use SSH keys, you can also opt in to sharing them. See [Sharing Git credentials with your container](/remote/advancedcontainers/sharing-git-credentials.md) for details.
+
+## Picking your quick start
+
+This document includes 3 quick starts - we recommend starting with the one that fits your workflow and interests the best:
+
+1. Want to try out a dev container in a quick sample repo? Check out [Quick start 1: Try a development container](#quick-start-try-a-development-container).
+2. Want to add a dev container to one of your existing locally cloned projects? Check out [Quick start 2: Open an existing folder in a container](#quick-start-open-an-existing-folder-in-a-container).
+3. Want to work with an isolated copy of a repo, i.e. to review a PR or investigate a branch without impacting your local work? Check out [Quick start 3: Open a git repo or PR in an isolated container volume](#quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume).
+
+## Quick start: Try a development container
+
+The easiest way to get started is to try one of the sample development containers. The [Containers tutorial](/docs/devcontainers/tutorial.md) will walk you through setting up Docker and the Dev Containers extension and let you select a sample:
+
+![Select a sample from the list](images/containers/select-a-sample.png)
+
+> Note: If you already have VS Code and Docker installed, then you may use [open in dev container](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/vscode-remote-try-python). You can learn more about this and how to add it to your repos in the [create a dev container guide](/docs/devcontainers/create-dev-container.md#add-configuration-files-to-a-repository).
+
+## Quick start: Open an existing folder in a container
+
+This quick start covers how to set up a dev container for an existing project to use as your full-time development environment using existing source code on your filesystem. Follow these steps:
+
+1. Start VS Code, run the **Dev Containers: Open Folder in Container...** command from the Command Palette (`kbstyle(F1)`) or quick actions Status bar item, and select the project folder you would like to set up the container for.
+
+    > **Tip:** If you want to edit the container's contents or settings before opening the folder, you can run **Dev Containers: Add Dev Container Configuration Files...** instead.
+
+    ![Quick actions Status bar item](images/containers/remote-dev-status-bar.png)
+
+2. Now pick a starting point for your dev container. You can either select a base **Dev Container Template** from a filterable list, or use an existing [Dockerfile](https://docs.docker.com/engine/reference/builder/) or [Docker Compose file](https://docs.docker.com/compose/compose-file/#compose-file-structure-and-examples) if one exists in the folder you selected.
+
+    > **Note:** When using Alpine Linux containers, some extensions may not work due to `glibc` dependencies in native code inside the extension.
+
+    ![Select a node Dev Container Template](images/containers/select-dev-container-def.png)
+
+    The list will be automatically sorted based on the contents of the folder you open.
+
+    You may be able to customize your dev container with additional Features, which [you can read more about below](#dev-container-features).
+
+    The dev container Templates displayed come from our [first-party and community index](https://containers.dev/templates), which is part of the [Dev Container Specification](https://containers.dev/). We host a set of Templates as part of the spec in the [devcontainers/templates repository](https://github.com/devcontainers/templates). You can browse the `src` folder of that repository to see the contents of each Template.
+
+    You can also choose to publish and distribute your own dev container Templates using the [dev container CLI](https://containers.dev/implementors/templates-distribution/).
+
+3. After picking the starting point for your container, VS Code will add the dev container configuration files to your project (`.devcontainer/devcontainer.json`).
+
+4. The VS Code window will reload and start building the dev container. A progress notification provides status updates. You only have to build a dev container the first time you open it; opening the folder after the first successful build will be much quicker.
+
+    ![Dev Container Progress Notification](images/containers/dev-container-progress.png)
+
+5. After the build completes, VS Code will automatically connect to the container.
+
+You can now interact with your project in VS Code just as you could when opening the project locally. From now on, when you open the project folder, VS Code will automatically pick up and reuse your dev container configuration.
+
+> **Tip:** Want to use a remote Docker host? See the section on [opening a folder on a remote SSH host in a container](#open-a-folder-on-a-remote-ssh-host-in-a-container) for information.
+
+While using this approach to [bind mount](https://docs.docker.com/storage/bind-mounts/) the local filesystem into a container is convenient, it does have some performance overhead on Windows and macOS. There are [some techniques](/remote/advancedcontainers/improve-performance.md) that you can apply to improve disk performance, or you can [open a repository in a container using an isolated container volume](#quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume) instead.
+
+### Open a WSL 2 folder in a container on Windows
+
+If you are using [Windows Subsystem for Linux v2 (WSL 2)](https://learn.microsoft.com/windows/wsl/wsl2-about) and have enabled [Docker Desktop's WSL 2 back-end](https://aka.ms/vscode-remote/containers/docker-wsl2), you can work with source code stored inside WSL!
+
+Once the WSL 2 engine is enabled, you can either:
+
+* Use the **Dev Containers: Reopen in Container** command from a folder already opened using the [WSL](https://aka.ms/vscode-remote/download/wsl) extension.
+* Select **Dev Containers: Open Folder in Container...** from the Command Palette (`kbstyle(F1)`) and choose a WSL folder using the local `\\wsl$` share (from the Windows side).
+
+The rest of the quick start applies as-is! You can learn more about the [WSL extension in its documentation](/docs/remote/wsl.md).
+
+### Open a folder on a remote SSH host in a container
+
+If you are using a Linux or macOS SSH host, you can use the [Remote - SSH](/docs/remote/ssh.md) and Dev Containers extensions together. You do not even need to have a Docker client installed locally.
+
+To do so:
+
+1. Follow the [installation](/docs/remote/ssh.md#installation) and SSH [host setup](/docs/remote/ssh.md#ssh-host-setup) steps for the Remote - SSH extension.
+1. **Optional:** Set up SSH [key based authentication](/docs/remote/troubleshooting.md#configuring-key-based-authentication) to the server so you do not need to enter your password multiple times.
+1. [Install Docker](#installation) on your SSH host. You do not need to install Docker locally.
+1. Follow the [quick start](/docs/remote/ssh.md#connect-to-a-remote-host) for the Remote - SSH extension to connect to a host and open a folder there.
+1. Use the **Dev Containers: Reopen in Container** command from the Command Palette (`kbstyle(F1)`, `kb(workbench.action.showCommands)`).
+
+The rest of the Dev Containers quick start applies as-is. You can learn more about the [Remote - SSH extension in its documentation](/docs/remote/ssh.md). You can also see the [Develop on a remote Docker host](/remote/advancedcontainers/develop-remote-host.md) article for other options if this model does not meet your needs.
+
+### Open a folder on a remote Tunnel host in a container
+
+You can use the [Remote - Tunnels](/docs/remote/tunnels.md) and Dev Containers extensions together to open a folder on your remote host inside of a container. You do not even need to have a Docker client installed locally. This is similar to the SSH host scenario above, but uses Remote - Tunnels instead.
+
+To do so:
+
+1. Follow the [Getting Started](/docs/remote/tunnels.md#getting-started) instructions for the Remote - Tunnels extension.
+1. [Install Docker](#installation) on your tunnel host. You do not need to install Docker locally.
+1. Follow the [steps](/docs/remote/tunnels.md#remote-tunnels-extension) for the Remote - Tunnels extension to connect to a tunnel host and open a folder there.
+1. Use the **Dev Containers: Reopen in Container** command from the Command Palette (`kbstyle(F1)`, `kb(workbench.action.showCommands)`).
+
+The rest of the Dev Containers quick start applies as-is. You can learn more about the [Remote - Tunnels extension in its documentation](/docs/remote/tunnels.md). You can also see the [Develop on a remote Docker host](/remote/advancedcontainers/develop-remote-host.md) article for other options if this model does not meet your needs.
+
+### Open an existing workspace in a container
+
+You can also follow a similar process to open a [VS Code multi-root workspace](/docs/editor/multi-root-workspaces) in a **single container** if the workspace only **references relative paths to sub-folders of the folder the `.code-workspace` file is in (or the folder itself).**
+
+You can either:
+
+* Use the **Dev Containers: Open Workspace in Container...** command.
+* Use **File > Open Workspace...** once you have opened a folder that contains a `.code-workspace` file in a container.
+
+Once connected, you may want to **add the `.devcontainer` folder** to the workspace so you can easily edit its contents if it is not already visible.
+
+Also note that, while you cannot use multiple containers for the same workspace in the same VS Code window, you can use [multiple Docker Compose managed containers at once](/remote/advancedcontainers/connect-multiple-containers.md) from separate windows.
+
+## Quick start: Open a Git repository or GitHub PR in an isolated container volume
+
+While you can [open a locally cloned repository in a container](#quick-start-open-an-existing-folder-in-a-container), you may want to work with an isolated copy of a repository for a PR review or to investigate another branch without impacting your work.
+
+Repository Containers use isolated, local Docker volumes instead of binding to the local filesystem. In addition to not polluting your file tree, local volumes have the added benefit of improved performance on Windows and macOS. (See Advanced Configuration [Improve disk performance](/remote/advancedcontainers/improve-performance.md) article for information on how to use these types of volumes in other scenarios.)
+
+For example, follow these steps to open one of the "try" repositories in a Repository Container:
+
+1. Start VS Code and run **Dev Containers: Clone Repository in Container Volume...** from the Command Palette (`kbstyle(F1)`).
+
+2. Enter `microsoft/vscode-remote-try-node` (or one of the other "try" repositories), a Git URI, a GitHub branch URL, or a GitHub PR URL in the input box that appears and press `kbstyle(Enter)`.
+
+    ![Input box with a repository name in it](images/containers/vscode-remote-try-node.png)
+
+    > **Tip:** If you choose a private repository, you may want to setup a credential manager or add your SSH keys to your SSH agent. See [Sharing Git credentials with your container](/remote/advancedcontainers/sharing-git-credentials.md).
+
+3. If your repository does not have a `.devcontainer/devcontainer.json` file in it, you'll be asked to pick a starting point from a filterable list or an existing [Dockerfile](https://docs.docker.com/engine/reference/builder/) or [Docker Compose file](https://docs.docker.com/compose/compose-file/#compose-file-structure-and-examples) (if one exists).
+
+    > **Note:** When using Alpine Linux containers, some extensions may not work due to `glibc` dependencies in native code inside the extension.
+
+    ![Select a node Dev Container Template](images/containers/select-dev-container-def.png)
+
+    The list will be automatically sorted based on the contents of the folder you open. The dev container Templates displayed come from our [first-party and community index](https://containers.dev/templates), which is part of the [Dev Container Specification](https://containers.dev/). We host a set of Templates as part of the spec in the [devcontainers/templates repository](https://github.com/devcontainers/templates). You can browse the `src` folder of that repository to see the contents of each Template.
+
+4. The VS Code window (instance) will reload, clone the source code, and start building the dev container. A progress notification provides status updates.
+
+    ![Dev Container Progress Notification](images/containers/dev-container-progress.png)
+
+    If you pasted in a GitHub pull request URL in step 2, the PR will be automatically checked out and the [GitHub Pull Requests](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github) extension will be installed in the container. The extension provides additional PR related features like a PR explorer, interacting with PR comments inline, and status bar visibility.
+
+    ![PR status in status bar](images/containers/checkout-pr-status.png)
+
+5. After the build completes, VS Code will automatically connect to the container. You can now work with the repository source code in this independent environment as you would if you had cloned the code locally.
+
+Note that if the container fails to come up due to something like a Docker build error, you can select **Reopen in Recovery Container** in the dialog that appears to go into a "recovery container" that allows you to edit your Dockerfile or other content. This opens the docker volume with the cloned repository in a minimal container and shows you the creation log. Once you are done fixing, use **Reopen in Container** to retry.
+
+> **Tip:** Want to use a remote Docker host? See the section on [opening a folder on a remote SSH host in a container](#open-a-folder-on-a-remote-ssh-host-in-a-container) for information.
+
+## Trusting your Workspace
+
+Visual Studio Code takes security seriously and wants to help you safely browse and edit code no matter the source or original authors. The [Workspace Trust feature](/docs/editing/workspaces/workspace-trust.md) lets you decide whether your project folders should allow or restrict automatic code execution.
+
+The Dev Containers extension has adopted Workspace Trust. Depending on how you open and interact with your source code, you'll be prompted to decide if you trust the code you're editing or executing at different points.
+
+### Reopen folder in container
+
+[Setting up a dev container for an existing project](#quick-start-open-an-existing-folder-in-a-container) requires trusting the local (or WSL) folder. You will be asked to trust the local (or WSL) folder before the window reloads.
+
+There are a couple of exceptions to this flow:
+
+1. When clicking on a recent entry.
+2. Using the **Open Folder in Container** command will ask for trust after the window reloads, if trust is not already given.
+
+### Attach to existing container
+
+When [attaching to an existing container](/docs/devcontainers/attach-container.md), you will be asked to confirm that attaching means you trust the container. This is only confirmed once.
+
+![Workspace trust prompt when attaching to container](images/containers/attach-containers-trust.png)
+
+### Clone repository in a volume
+
+When [cloning a repository in a container volume](#quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume), you are asked to confirm that cloning a repository means you trust the repository. This is only confirmed once.
+
+![Workspace trust prompt when cloning in container volume](images/containers/clone-containers-trust.png)
+
+### Inspect volume
+
+[Inspecting a volume](#inspecting-volumes) starts in [Restricted Mode](/docs/editing/workspaces/workspace-trust.md#restricted-mode), and you can trust the folder inside the container.
+
+### Docker daemon running remotely
+
+This implies trusting [the machine the Docker daemon runs on](/remote/advancedcontainers/develop-remote-host.md). There are no additional prompts to confirm (only those listed for the local/WSL case above).
+
+## Create a devcontainer.json file
+
+VS Code's container configuration is stored in a [devcontainer.json](https://containers.dev/implementors/json_reference) file. This file is similar to the `launch.json` file for debugging configurations, but is used for launching (or attaching to) your development container instead. You can also specify any extensions to install once the container is running or post-create commands to prepare the environment. The dev container configuration is either located under `.devcontainer/devcontainer.json` or stored as a `.devcontainer.json` file (note the dot-prefix) in the root of your project.
+
+Selecting the **Dev Containers: Add Dev Container Configuration Files...** command from the Command Palette (`kbstyle(F1)`) will add the needed files to your project as a starting point, which you can further customize for your needs. The command lets you pick a pre-defined container configuration from a list based on your folder's contents, reuse an existing Dockerfile, or reuse an existing Docker Compose file.
+
+![Select a node Dev Container Template](images/containers/select-dev-container-def.png)
+
+You can also create a devcontainer.json by hand and use any image, Dockerfile, or set of Docker Compose files as a starting point. Here is a simple example that uses one of the pre-built [Development Container images](https://github.com/devcontainers/images/tree/main/src/typescript-node):
+
+```json
+{
+    "image": "mcr.microsoft.com/devcontainers/typescript-node",
+    "forwardPorts": [ 3000 ],
+    "customizations": {
+        // Configure properties specific to VS Code.
+        "vscode": {
+            // Add the IDs of extensions you want installed when the container is created.
+            "extensions": [
+                "streetsidesoftware.code-spell-checker"
+            ]
+        }
+    }
+}
+```
+
+> **Note:** Additional configuration will already be added to the container based on what's in the base image. For example, we add the `streetsidesoftware.code-spell-checker` extension above, and the container will also include `"dbaeumer.vscode-eslint"` as [that's part of `mcr.microsoft.com/devcontainers/typescript-node`](https://github.com/devcontainers/images/blob/main/src/javascript-node/.devcontainer/devcontainer.json#L27). This happens automatically when pre-building using `devcontainer.json`, which you may read more about in the [pre-build section](#prebuilding-dev-container-images).
+
+To learn more about creating `devcontainer.json` files, see [Create a Development Container](/docs/devcontainers/create-dev-container.md).
+
+## Dev Container Features
+
+Development container "Features" are self-contained, shareable units of installation code and dev container configuration. The name comes from the idea that referencing one of them allows you to quickly and easily add more tooling, runtime, or library "Features" into your development container for use by you or your collaborators.
+
+When you use **Dev Containers: Add Dev Container Configuration Files**, you're presented a list of scripts to customize the existing dev container configurations, such as installing Git or the Azure CLI:
+
+![Dev container Features list drop down](images/containers/container-features.png)
+
+When you rebuild and reopen in your container, the Features you selected will be available in your `devcontainer.json`:
+
+```json
+"features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {
+        "version": "latest"
+    }
+}
+```
+
+You'll get IntelliSense when editing the `"features"` property in the `devcontainer.json` directly:
+
+![Intellisense when modifying terraform Feature](images/containers/features-intellisense.png)
+
+The **Dev Containers: Configure Container Features** command allows you to update an existing configuration.
+
+The Features sourced in VS Code UI now come from a central index, which you can also contribute to. See the [Dev Containers specification site](https://containers.dev/features) for the current list, and to [learn how to publish and distribute Features](https://containers.dev/implementors/features-distribution/).
+
+### "Always installed" Features
+
+Similar to how you can [set extensions to always be installed](#always-installed-extensions) in your dev container, you can use the `setting(dev.containers.defaultFeatures)` User [setting](/docs/configure/settings.md) to set Features you'd always like installed:
+
+```json
+"dev.containers.defaultFeatures": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+},
+```
+
+### Creating your own Feature
+
+It's also easy to create and publish your own Dev Container Features. Published Features can be stored and shared as [OCI Artifacts](https://github.com/opencontainers/artifacts) from any supporting public or private container registry. You can see the list of current published Features on [containers.dev](https://containers.dev/features).
+
+A Feature is a self contained entity in a folder with at least a `devcontainer-feature.json` and `install.sh` entrypoint script:
 
 ```
-# Always use descriptive variable names
++-- feature
+|    +-- devcontainer-feature.json
+|    +-- install.sh
+|    +-- (other files)
 ```
 
-You'll be prompted to select which memory file to store this in.
+Check out the [feature/starter](https://github.com/devcontainers/feature-starter) repository for instructions on using the dev container CLI to publish your own public or private Features.
 
-### Line breaks in terminal
+### Features specification and distribution
 
-Enter multiline commands using:
+Features are a key part of the open-source [Development Containers Specification](https://containers.dev). You can review [more information about how Features work](https://containers.dev/implementors/features) and their [distribution](https://containers.dev/implementors/features-distribution).
 
-* **Quick escape**: Type `\` followed by Enter
-* **Keyboard shortcut**: Option+Enter (or Shift+Enter if configured)
+## Pre-building dev container images
 
-To set up Option+Enter in your terminal:
+We recommend pre-building images with the tools you need rather than creating and building a container image each time you open your project in a dev container. Using pre-built images will result in a faster container startup, simpler configuration, and allows you to pin to a specific version of tools to improve supply-chain security and avoid potential breaks. You can automate pre-building your image by scheduling the build using a DevOps or continuous integration (CI) service like GitHub Actions.
 
-**For Mac Terminal.app:**
+Even better - pre-built images can contain Dev Container metadata so when you reference an image, settings will be pulled across automatically.
 
-1. Open Settings → Profiles → Keyboard
-2. Check "Use Option as Meta Key"
+We recommend using the [Dev Container CLI](/docs/devcontainers/devcontainer-cli.md) (or other [specification](https://containers.dev) supporting utilities like the [GitHub Action](https://github.com/marketplace/actions/devcontainers-ci)) to pre-build your images since it is kept in sync with the Dev Containers extension's latest capabilities - including [dev container Features](#dev-container-features). Once you've built your image, you can push it to a container registry (like the [Azure Container Registry](https://learn.microsoft.com/azure/container-registry/container-registry-get-started-docker-cli?tabs=azure-cli), [GitHub Container Registry](https://docs.github.com/packages/working-with-a-github-packages-registry/working-with-the-container-registry#pushing-container-images), or [Docker Hub](https://docs.docker.com/engine/reference/commandline/push)) and reference it directly.
 
-**For iTerm2 and VSCode terminal:**
+You can use the GitHub Action in the [devcontainers/ci](https://github.com/devcontainers/ci) repository to help you reuse dev containers in your workflows.
 
-1. Open Settings → Profiles → Keys
-2. Under General, set Left/Right Option key to "Esc+"
+Go to the [dev container CLI article on pre-building images](/docs/devcontainers/devcontainer-cli.md#prebuilding) for more information.
 
-**Tip for iTerm2 and VSCode users**: Run `/terminal-setup` within Claude Code to
-automatically configure Shift+Enter as a more intuitive alternative.
+### Inheriting metadata
 
-See [terminal setup in settings](/en/docs/claude-code/settings#line-breaks) for
-configuration details.
+You can include Dev Container configuration and Feature metadata in prebuilt images via [image labels](https://docs.docker.com/config/labels-custom-metadata/). This makes the image self-contained since these settings are automatically picked up when the image is referenced - whether directly, in a `FROM` in a referenced Dockerfile, or in a Docker Compose file. This helps prevent your Dev Container config and image contents from getting out of sync, and allows you to push updates of the same configuration to multiple repositories through a simple image reference.
 
-## Vim Mode
+This metadata label is **automatically added** when you pre-build using the [Dev Container CLI](/docs/devcontainers/devcontainer-cli.md) (or other [specification](https://containers.dev) supporting utilities like the [GitHub Action](https://github.com/marketplace/actions/devcontainers-ci) or [Azure DevOps task](https://marketplace.visualstudio.com/items?itemName=devcontainers.ci)) and includes settings from `devcontainer.json` and any referenced Dev Container Features.
 
-Claude Code supports a subset of Vim keybindings that can be enabled with `/vim`
-or configured via `/config`.
+This allows you to have a separate **more complex** `devcontainer.json` you use to pre-build your image, and then a dramatically **simplified one** in one or more repositories. The contents of the image will be merged with this simplified `devcontainer.json` content at the time you create the container (go to [the spec](https://containers.dev/implementors/spec/#merge-logic) for information on merge logic). But at its simplest, you can just reference the image directly in `devcontainer.json` for the settings to take effect:
 
-The supported subset includes:
+```json
+{
+    "image": "mcr.microsoft.com/devcontainers/go:1"
+}
+```
 
-* Mode switching: `Esc` (to NORMAL), `i`/`I`, `a`/`A`, `o`/`O` (to INSERT)
-* Navigation: `h`/`j`/`k`/`l`, `w`/`e`/`b`, `0`/`$`/`^`, `gg`/`G`
-* Editing: `x`, `dw`/`de`/`db`/`dd`/`D`, `cw`/`ce`/`cb`/`cc`/`C`, `.` (repeat)
+Note that you can also opt to manually add metadata to an image label instead. These properties will be picked up even if you didn't use the Dev Container CLI to build (and can be updated by the CLI even if you do). For example, consider this Dockerfile snippet:
+
+```docker
+LABEL devcontainer.metadata='[{ \
+  "capAdd": [ "SYS_PTRACE" ], \
+  "remoteUser": "devcontainer", \
+  "postCreateCommand": "yarn install" \
+}]'
+```
+
+## Inspecting volumes
+
+Occasionally you may run into a situation where you are using a Docker named volume that you want to inspect or make changes in. You can use VS Code to work with these contents without creating or modifying `devcontainer.json` file by selecting the **Dev Containers: Explore a Volume in a Dev Container...** from the Command Palette (`kbstyle(F1)`).
+
+You can also inspect your volumes in the Remote Explorer. Make sure you have Containers selected in the dropdown, then you'll notice a **Dev Volumes** section. You can right-click on a volume to inspect its creation information, like when the volume was created, what repository was cloned into it, and the mountpoint. You can also explore it in a dev container.
+
+![Right-click dev volumes in Remote Explorer](images/containers/dev-volumes.png)
+
+If you have the [Container Tools extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-containers) installed, you can right-click on a volume in the **Volumes** section of the **Container Explorer** and select **Explore in a Development Container**.
+
+![Explore in dev container in Container Tools context menu](images/containers/docker-explore-dev-container.png)
+
+## Managing extensions
+
+VS Code runs extensions in one of two places: locally on the UI / client side, or in the container. While extensions that affect the VS Code UI, like themes and snippets, are installed locally, most extensions will reside inside a particular container. This allows you to install only the extensions you need for a given task in a container and seamlessly switch your entire tool-chain just by connecting to a new container.
+
+If you install an extension from the Extensions view, it will automatically be installed in the correct location. You can tell where an extension is installed based on the category grouping. There will be a **Local - Installed** category and also one for your container.
+
+![Workspace Extension Category](images/containers/containers-installed-remote-indicator.png)
+
+![Local Extension Category](images/containers/local-installed-extensions.png)
+
+> **Note:** If you are an extension author and your extension is not working properly or installs in the wrong place, see [Supporting Remote Development](/api/advanced-topics/remote-extensions.md) for details.
+
+Local extensions that actually need to run remotely will appear **Disabled** in the **Local - Installed** category. Select **Install** to install an extension on your remote host.
+
+![Disabled Extensions w/Install Button](images/containers/containers-disabled-extensions.png)
+
+You can also install all locally installed extensions inside the Dev Container by going to the Extensions view and selecting **Install Local Extensions in Dev Container: {Name}** using the cloud button at the right of the **Local - Installed** title bar. This will display a dropdown where you can select which locally installed extensions to install in your container.
+
+![Install all extensions](images/containers/install-all-extn-containers.png)
+
+However, some extensions may require you to [install additional software](/docs/devcontainers/create-dev-container.md#install-additional-software) in the container. Consult extension documentation for details if you encounter issues.
+
+### Adding an extension to devcontainer.json
+
+While you can edit your [devcontainer.json](/docs/devcontainers/create-dev-container.md#create-a-devcontainerjson-file) file by hand to add a list of extension IDs, you can also right-click on any extension in the Extensions view and select **Add to devcontainer.json**.
+
+![Add to devcontainer.json menu](images/containers/containers-addto-devcontainer.png)
+
+### Opt out of extensions
+
+If a base image or Feature configures an extension that you do not want installed in your dev container, you can opt out by listing the extension with a minus sign. For example:
+
+```json
+{
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bookworm",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "-dbaeumer.vscode-eslint"
+            ]
+        }
+    }
+}
+```
+
+### "Always installed" extensions
+
+If there are extensions that you would like always installed in any container, you can update the `setting(dev.containers.defaultExtensions)` User [setting](/docs/configure/settings.md). For example, if you wanted to install the [GitLens](https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens) and [Resource Monitor](https://marketplace.visualstudio.com/items?itemName=mutantdino.resourcemonitor) extensions, you would specify their extension IDs as follows:
+
+```json
+"dev.containers.defaultExtensions": [
+    "eamodio.gitlens",
+    "mutantdino.resourcemonitor"
+]
+```
+
+### Advanced: Forcing an extension to run locally or remotely
+
+Extensions are typically designed and tested to either run locally or remotely, not both. However, if an extension supports it, you can force it to run in a particular location in your `settings.json` file.
+
+For example, the setting below will force the [Container Tools](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-containers) extension to run locally and [Remote - SSH: Editing Configuration Files](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh-edit) extension to run remotely instead of their defaults:
+
+```json
+"remote.extensionKind": {
+    "ms-azuretools.vscode-containers": [ "ui" ],
+    "ms-vscode-remote.remote-ssh-edit": [ "workspace" ]
+}
+```
+
+A value of `"ui"` instead of `"workspace"` will force the extension to run on the local UI/client side instead. Typically, this should only be used for testing unless otherwise noted in the extension's documentation since it **can break extensions**. See the section on [preferred extension location](/api/advanced-topics/extension-host#preferred-extension-location) for details.
+
+## Forwarding or publishing a port
+
+Containers are separate environments, so if you want to access a server, service, or other resource inside your container, you will need to either "forward" or "[publish](https://stackoverflow.com/a/22150099)" the port to your host. You can either configure your container to always expose these ports or just forward them temporarily.
+
+### Always forwarding a port
+
+You can specify a list of ports you **always** want to forward when attaching or opening a folder in container by using the `forwardPorts` property in `devcontainer.json`.
+
+```json
+"forwardPorts": [3000, 3001]
+```
+
+Simply reload / reopen the window and the setting will be applied when VS Code connects to the container.
+
+### Temporarily forwarding a port
+
+If you need to access a port that you didn't add to `devcontainer.json` or publish in your Docker Compose file, you can **temporarily forward** a new port for the duration of the session by running the **Forward a Port** command from the Command Palette (`kbstyle(F1)`).
+
+![Forward port input](images/containers/forward-port-containers.png)
+
+After selecting a port, a notification will tell you the localhost port you should use to access the port in the container. For example, if you forwarded an HTTP server listening on port 3000, the notification may tell you that it was mapped to port 4123 on localhost. You can then connect to this remote HTTP server using `http://localhost:4123`.
+
+This same information is available in the **Forwarded Ports** section of the Remote Explorer if you need to access it later.
+
+If you would like VS Code to remember any ports you have forwarded, check **Remote: Restore Forwarded Ports** in the Settings editor (`kb(workbench.action.openSettings)`) or set `"remote.restoreForwardedPorts": true` in `settings.json`.
+
+![Restore forwarded ports setting](images/containers/restore-forwarded-ports.png)
+
+### Publishing a port
+
+Docker has the concept of "publishing" ports when the container is created. Published ports behave very much like ports you make available to your local network. If your application only accepts calls from `localhost`, it will reject connections from published ports just as your local machine would for network calls. Forwarded ports, on the other hand, actually look like `localhost` to the application. Each can be useful in different situations.
+
+To publish a port, you can:
+
+1. **Use the appPort property:** If you reference an image or Dockerfile in `devcontainer.json`, you can use the `appPort` property to publish ports to the host.
+
+    ```json
+    "appPort": [ 3000, "8921:5000" ]
+    ```
+
+2. **Use the Docker Compose ports mapping:** The [ports mapping](https://docs.docker.com/compose/compose-file#ports) can easily be added your `docker-compose.yml` file to publish additional ports.
+
+    ```yaml
+    ports:
+    - "3000"
+    - "8921:5000"
+    ```
+
+In each case, you'll need to rebuild your container for the setting to take effect. You can do this by running the **Dev Containers: Rebuild Container** command in the Command Palette (`kbstyle(F1)`) when you are connected to the container.
+
+## Opening a terminal
+
+Opening a terminal in a container from VS Code is simple. Once you've opened a folder in a container, **any terminal window** you open in VS Code (**Terminal > New Terminal**) will automatically run in the container rather than locally.
+
+You can also use the `code` command line from this same terminal window to perform a number of operations such as opening a new file or folder in the container. Type `code --help` to learn what options are available from the command line.
+
+![Using the code CLI](images/containers/code-command-in-terminal.png)
+
+## Debugging in a container
+
+Once you've opened a folder in a container, you can use VS Code's debugger in the same way you would when running the application locally. For example, if you select a launch configuration in `launch.json` and start debugging (`kb(workbench.action.debug.start)`), the application will start on the remote host and attach the debugger to it.
+
+See the [debugging](/docs/debugtest/debugging.md) documentation for details on configuring VS Code's debugging features in `.vscode/launch.json`.
+
+## Container specific settings
+
+VS Code's local user settings are also reused when you are connected to a dev container. While this keeps your user experience consistent, you may want to vary some of these settings between your local machine and each container. Fortunately, once you have connected to a container, you can also set container-specific settings by running the **Preferences: Open Remote Settings** command from the Command Palette (`kbstyle(F1)`) or by selecting the **Remote** tab in the Settings editor. These will override any local settings you have in place whenever you connect to the container.
+
+![Container specific settings tab](images/containers/container-settings.png)
+
+### Default container specific settings
+
+You can include defaults for container specific settings in `devcontainer.json` using the `settings` property. These values will be automatically placed in the container specific settings file inside the container once it is created.
+
+For example, adding this to `.devcontainer/devcontainer.json` will set the Java home path:
+
+```json
+// Configure tool-specific properties.
+"customizations": {
+    // Configure properties specific to VS Code.
+    "vscode": {
+        "settings": {
+            "java.home": "/docker-java-home"
+        }
+    }
+}
+```
+
+Since this just establishes the default, you are still able to change the settings as needed once the container is created.
+
+## Managing containers
+
+By default, the Dev Containers extension automatically starts the containers mentioned in the `devcontainer.json` when you open the folder. When you close VS Code, the extension automatically shuts down the containers you've connected to. You can change this behavior by adding `"shutdownAction": "none"` to `devcontainer.json`.
+
+While you can use the command line to manage your containers, you can also use the  **Remote Explorer**. To stop a container, select Containers from the dropdown (if present), right-click on a running container, and select **Stop Container**. You can also start exited containers, remove containers, and remove recent folders. From the Details view, you can forward ports and open already forwarded ports in the browser.
+
+![Containers Explorer screenshot](images/containers/containers-explorer.png)
+
+If you want to clean out images or mass-delete containers, see [Cleaning out unused containers and images](/docs/devcontainers/tips-and-tricks.md#cleaning-out-unused-containers-and-images) for different options.
+
+## Personalizing with dotfile repositories
+
+Dotfiles are files whose filename begins with a dot (`.`) and typically contain configuration information for various applications. Since development containers can cover a wide range of application types, it can be useful to store these files somewhere so that you can easily copy them into a container once it is up and running.
+
+A common way to do this is to store these dotfiles in a GitHub repository and then use a utility to clone and apply them. The Dev Containers extension has built-in support for using these with your own containers. If you are new to the idea, take a look at the different [dotfiles bootstrap repositories](https://dotfiles.github.io/) that exist.
+
+To use it, add your dotfiles GitHub repository to VS Code's User Settings (`kb(workbench.action.openSettings)`) as follows:
+
+![Settings for dotfiles](images/containers/dotfiles.png)
+
+Or in `settings.json`:
+
+```json
+{
+    "dotfiles.repository": "your-github-id/your-dotfiles-repo",
+    "dotfiles.targetPath": "~/dotfiles",
+    "dotfiles.installCommand": "install.sh"
+}
+```
+
+From this point forward, the dotfiles repository will be used whenever a container is created.
+
+## Known limitations
+
+### Dev Containers limitations
+
+* Windows container images are **not** supported.
+* All roots/folders in a multi-root workspace will be opened in the same container, regardless of whether there are configuration files at lower levels.
+* The unofficial Ubuntu Docker **snap** package for Linux is **not** supported. Follow the [official Docker install instructions for your distribution](https://docs.docker.com/install/#supported-platforms).
+* Docker Toolbox on Windows is not supported.
+* If you clone a Git repository using SSH and your SSH key has a passphrase, VS Code's pull and sync features may hang when running remotely. Either use an SSH key without a passphrase, clone using HTTPS, or run `git push` from the command line to work around the issue.
+* Local proxy settings are not reused inside the container, which can prevent extensions from working unless the appropriate proxy information is configured (for example global `HTTP_PROXY` or `HTTPS_PROXY` environment variables with the appropriate proxy information).
+* There is an incompatibility between OpenSSH versions on Windows when the ssh-agent runs with version <= 8.8 and the SSH client (on any platform) runs version >= 8.9. The workaround is to upgrade OpenSSH on Windows to 8.9 or later, either using winget or an installer from [Win32-OpenSSH/releases](https://github.com/PowerShell/Win32-OpenSSH/releases). (Note that `ssh-add -l` will work correctly, but `ssh <ssh-server>` will fail with `<ssh-server>: Permission denied (publickey)`. This also affects Git when using SSH to connect to the repository.)
+
+See [here for a list of active issues](https://aka.ms/vscode-remote/containers/issues) related to Containers.
+
+### Docker limitations
+
+See the Docker troubleshooting guide for [Windows](https://docs.docker.com/docker-for-windows/troubleshoot) or [Mac](https://docs.docker.com/docker-for-mac/troubleshoot), consult [Docker Support Resources](https://success.docker.com/article/best-support-resources) for more information.
+
+### Container Tools Extension limitations
+
+If you are using the Container Tools or Kubernetes extension from a WSL, Remote - Tunnels or Remote - SSH window, using the **Attach Visual Studio Code** context menu action in the Container Explorer or Kubernetes view will ask to pick from the available containers a second time.
+
+### Extension limitations
+
+At this point, most extensions will work inside Dev Containers without modification. However, in some cases, certain features may require changes. If you run into an extension issue, see [here for a summary of common problems and solutions](/docs/remote/troubleshooting.md#extension-tips) that you can mention to the extension author when reporting the issue.
+
+In addition, while Alpine support is available, some extensions installed in the container may not work due to `glibc` dependencies in native code inside the extension. See the [Remote Development with Linux](/docs/remote/linux.md) article for details.
+
+## Advanced container configuration
+
+See the [Advanced container configuration](/remote/advancedcontainers/overview.md) articles for information on the following topics:
+
+* [Adding environment variables](/remote/advancedcontainers/environment-variables.md)
+* [Adding another local file mount](/remote/advancedcontainers/add-local-file-mount.md)
+* [Changing or removing the default source code mount](/remote/advancedcontainers/change-default-source-mount.md)
+* [Improving container disk performance](/remote/advancedcontainers/improve-performance.md)
+* [Adding a non-root user to your dev container](/remote/advancedcontainers/add-nonroot-user.md)
+* [Setting the project name for Docker Compose](/remote/advancedcontainers/set-docker-compose-project-name.md)
+* [Using Docker or Kubernetes from inside a container](/remote/advancedcontainers/use-docker-kubernetes.md)
+* [Connecting to multiple containers at once](/remote/advancedcontainers/connect-multiple-containers.md)
+* [Developing inside a container on a remote Docker Machine or SSH host](/remote/advancedcontainers/develop-remote-host.md)
+* [Reducing Dockerfile build warnings](/remote/advancedcontainers/reduce-docker-warnings.md)
+* [Sharing git credentials with your container](/remote/advancedcontainers/sharing-git-credentials.md)
+
+## devcontainer.json reference
+
+There is a full [devcontainer.json reference](https://containers.dev/implementors/json_reference), where you can review the file schema to help you customize your development containers and control how you attach to running containers.
+
+## Questions or feedback
+
+* See [Tips and Tricks](/docs/devcontainers/tips-and-tricks.md) or the [FAQ](/docs/devcontainers/faq.md).
+* Search on [Stack Overflow](https://stackoverflow.com/questions/tagged/vscode-remote).
+* Add a [feature request](https://aka.ms/vscode-remote/feature-requests) or [report a problem](https://aka.ms/vscode-remote/issues/new).
+* Create a [Dev Container Template](https://containers.dev/templates) or [Feature](https://containers.dev/features) for others to use.
+* Review and provide feedback on the [Development Containers Specification](https://containers.dev/).
+* Contribute to [our documentation](https://github.com/microsoft/vscode-docs) or [VS Code itself](https://github.com/microsoft/vscode).
+* See our [CONTRIBUTING](https://aka.ms/vscode-remote/contributing) guide for details.
+
+## Troubleshooting
+
+### Unable to write file (NoPermissions (FileSystemError))
+
+You might encounter this issue when you run dev containers in the following configuration:
+
+* Docker Desktop running with Windows Subsystem for Linux (WSL) backend
+* [Enhanced Container Isolation](https://docs.docker.com/security/for-admins/hardened-desktop/enhanced-container-isolation/) (ECI) enabled
+
+Check [issue #8278](https://github.com/microsoft/vscode-docs/issues/8278) for a potential workaround.
+
+## Next steps
+
+* [Attach to a Running Container](/docs/devcontainers/attach-container.md) - Attach to an already running Docker container.
+* [Create a Development Container](/docs/devcontainers/create-dev-container.md) - Create a custom container for your work environment.
+* [Advanced Containers](/remote/advancedcontainers/overview.md) - Find solutions to advanced container scenarios.
+* [devcontainer.json reference](https://containers.dev/implementors/json_reference) - Review the `devcontainer.json` schema.
+
+Project Path: claude-code
+
+Source Tree:
+
+```txt
+claude-code
+├── CHANGELOG.md
+├── LICENSE.md
+├── README.md
+├── SECURITY.md
+└── demo.gif
+
+```
+
+`claude-code/CHANGELOG.md`:
+
+```md
+
+</devcontainer_vscode>
+
+<changelog>
+
+# Changelog
+
+## 1.0.31
+
+- Fixed a bug where ~/.claude.json would get reset when file contained invalid JSON
+
+## 1.0.30
+
+- Custom slash commands: Run bash output, @-mention files, enable thinking with thinking keywords
+- Improved file path autocomplete with filename matching
+- Added timestamps in Ctrl-r mode and fixed Ctrl-c handling
+- Enhanced jq regex support for complex filters with pipes and select
+
+## 1.0.29
+
+- Improved CJK character support in cursor navigation and rendering
+
+## 1.0.28
+
+- Slash commands: Fix selector display during history navigation
+- Resizes images before upload to prevent API size limit errors
+- Added XDG_CONFIG_HOME support to configuration directory
+- Performance optimizations for memory usage
+- New attributes (terminal.type, language) in OpenTelemetry logging
+
+## 1.0.27
+
+- Streamable HTTP MCP servers are now supported
+- Remote MCP servers (SSE and HTTP) now support OAuth
+- MCP resources can now be @-mentioned
+- /resume slash command to switch conversations within Claude Code
+
+## 1.0.25
+
+- Slash commands: moved "project" and "user" prefixes to descriptions
+- Slash commands: improved reliability for command discovery
+- Improved support for Ghostty
+- Improved web search reliability
+
+## 1.0.24
+
+- Improved /mcp output
+- Fixed a bug where settings arrays got overwritten instead of merged
+
+## 1.0.23
+
+- Released TypeScript SDK: import @anthropic-ai/claude-code to get started
+- Released Python SDK: pip install claude-code-sdk to get started
+
+## 1.0.22
+
+- SDK: Renamed `total_cost` to `total_cost_usd`
+
+## 1.0.21
+
+- Improved editing of files with tab-based indentation
+- Fix for tool_use without matching tool_result errors
+- Fixed a bug where stdio MCP server processes would linger after quitting Claude Code
+
+## 1.0.18
+
+- Added --add-dir CLI argument for specifying additional working directories
+- Added streaming input support without require -p flag
+- Improved startup performance and session storage performance
+- Added CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR environment variable to freeze working directory for bash commands
+- Added detailed MCP server tools display (/mcp)
+- MCP authentication and permission improvements
+- Added auto-reconnection for MCP SSE connections on disconnect
+- Fixed issue where pasted content was lost when dialogs appeared
+
+## 1.0.17
+
+- We now emit messages from sub-tasks in -p mode (look for the parent_tool_use_id property)
+- Fixed crashes when the VS Code diff tool is invoked multiple times quickly
+- MCP server list UI improvements
+- Update Claude Code process title to display "claude" instead of "node"
+
+## 1.0.11
+
+- Claude Code can now also be used with a Claude Pro subscription
+- Added /upgrade for smoother switching to Claude Max plans
+- Improved UI for authentication from API keys and Bedrock/Vertex/external auth tokens
+- Improved shell configuration error handling
+- Improved todo list handling during compaction
+
+## 1.0.10
+
+- Added markdown table support
+- Improved streaming performance
+
+## 1.0.8
+
+- Fixed Vertex AI region fallback when using CLOUD_ML_REGION
+- Increased default otel interval from 1s -> 5s
+- Fixed edge cases where MCP_TIMEOUT and MCP_TOOL_TIMEOUT weren't being respected
+- Fixed a regression where search tools unnecessarily asked for permissions
+- Added support for triggering thinking non-English languages
+- Improved compacting UI
+
+## 1.0.7
+
+- Renamed /allowed-tools -> /permissions
+- Migrated allowedTools and ignorePatterns from .claude.json -> settings.json
+- Deprecated claude config commands in favor of editing settings.json
+- Fixed a bug where --dangerously-skip-permissions sometimes didn't work in --print mode
+- Improved error handling for /install-github-app
+- Bugfixes, UI polish, and tool reliability improvements
+
+## 1.0.6
+
+- Improved edit reliability for tab-indented files
+- Respect CLAUDE_CONFIG_DIR everywhere
+- Reduced unnecessary tool permission prompts
+- Added support for symlinks in @file typeahead
+- Bugfixes, UI polish, and tool reliability improvements
+
+## 1.0.4
+
+- Fixed a bug where MCP tool errors weren't being parsed correctly
+
+## 1.0.1
+
+- Added `DISABLE_INTERLEAVED_THINKING` to give users the option to opt out of interleaved thinking.
+- Improved model references to show provider-specific names (Sonnet 3.7 for Bedrock, Sonnet 4 for Console)
+- Updated documentation links and OAuth process descriptions
+
+## 1.0.0
+
+- Claude Code is now generally available
+- Introducing Sonnet 4 and Opus 4 models
+
+## 0.2.125
+
+- Breaking change: Bedrock ARN passed to `ANTHROPIC_MODEL` or `ANTHROPIC_SMALL_FAST_MODEL` should no longer contain an escaped slash (specify `/` instead of `%2F`)
+- Removed `DEBUG=true` in favor of `ANTHROPIC_LOG=debug`, to log all requests
+
+## 0.2.117
+
+- Breaking change: --print JSON output now returns nested message objects, for forwards-compatibility as we introduce new metadata fields
+- Introduced settings.cleanupPeriodDays
+- Introduced CLAUDE_CODE_API_KEY_HELPER_TTL_MS env var
+- Introduced --debug mode
+
+## 0.2.108
+
+- You can now send messages to Claude while it works to steer Claude in real-time
+- Introduced BASH_DEFAULT_TIMEOUT_MS and BASH_MAX_TIMEOUT_MS env vars
+- Fixed a bug where thinking was not working in -p mode
+- Fixed a regression in /cost reporting
+- Deprecated MCP wizard interface in favor of other MCP commands
+- Lots of other bugfixes and improvements
+
+## 0.2.107
+
+- CLAUDE.md files can now import other files. Add @path/to/file.md to ./CLAUDE.md to load additional files on launch
+
+## 0.2.106
+
+- MCP SSE server configs can now specify custom headers
+- Fixed a bug where MCP permission prompt didn't always show correctly
+
+## 0.2.105
+
+- Claude can now search the web
+- Moved system & account status to /status
+- Added word movement keybindings for Vim
+- Improved latency for startup, todo tool, and file edits
+
+## 0.2.102
+
+- Improved thinking triggering reliability
+- Improved @mention reliability for images and folders
+- You can now paste multiple large chunks into one prompt
+
+## 0.2.100
+
+- Fixed a crash caused by a stack overflow error
+- Made db storage optional; missing db support disables --continue and --resume
+
+## 0.2.98
+
+- Fixed an issue where auto-compact was running twice
+
+## 0.2.96
+
+- Claude Code can now also be used with a Claude Max subscription (https://claude.ai/upgrade)
+
+## 0.2.93
+
+- Resume conversations from where you left off from with "claude --continue" and "claude --resume"
+- Claude now has access to a Todo list that helps it stay on track and be more organized
+
+## 0.2.82
+
+- Added support for --disallowedTools
+- Renamed tools for consistency: LSTool -> LS, View -> Read, etc.
+
+## 0.2.75
+
+- Hit Enter to queue up additional messages while Claude is working
+- Drag in or copy/paste image files directly into the prompt
+- @-mention files to directly add them to context
+- Run one-off MCP servers with `claude --mcp-config <path-to-file>`
+- Improved performance for filename auto-complete
+
+## 0.2.74
+
+- Added support for refreshing dynamically generated API keys (via apiKeyHelper), with a 5 minute TTL
+- Task tool can now perform writes and run bash commands
+
+## 0.2.72
+
+- Updated spinner to indicate tokens loaded and tool usage
+
+## 0.2.70
+
+- Network commands like curl are now available for Claude to use
+- Claude can now run multiple web queries in parallel
+- Pressing ESC once immediately interrupts Claude in Auto-accept mode
+
+## 0.2.69
+
+- Fixed UI glitches with improved Select component behavior
+- Enhanced terminal output display with better text truncation logic
+
+## 0.2.67
+
+- Shared project permission rules can be saved in .claude/settings.json
+
+## 0.2.66
+
+- Print mode (-p) now supports streaming output via --output-format=stream-json
+- Fixed issue where pasting could trigger memory or bash mode unexpectedly
+
+## 0.2.63
+
+- Fixed an issue where MCP tools were loaded twice, which caused tool call errors
+
+## 0.2.61
+
+- Navigate menus with vim-style keys (j/k) or bash/emacs shortcuts (Ctrl+n/p) for faster interaction
+- Enhanced image detection for more reliable clipboard paste functionality
+- Fixed an issue where ESC key could crash the conversation history selector
+
+## 0.2.59
+
+- Copy+paste images directly into your prompt
+- Improved progress indicators for bash and fetch tools
+- Bugfixes for non-interactive mode (-p)
+
+## 0.2.54
+
+- Quickly add to Memory by starting your message with '#'
+- Press ctrl+r to see full output for long tool results
+- Added support for MCP SSE transport
+
+## 0.2.53
+
+- New web fetch tool lets Claude view URLs that you paste in
+- Fixed a bug with JPEG detection
+
+## 0.2.50
+
+- New MCP "project" scope now allows you to add MCP servers to .mcp.json files and commit them to your repository
+
+## 0.2.49
+
+- Previous MCP server scopes have been renamed: previous "project" scope is now "local" and "global" scope is now "user"
+
+## 0.2.47
+
+- Press Tab to auto-complete file and folder names
+- Press Shift + Tab to toggle auto-accept for file edits
+- Automatic conversation compaction for infinite conversation length (toggle with /config)
+
+## 0.2.44
+
+- Ask Claude to make a plan with thinking mode: just say 'think' or 'think harder' or even 'ultrathink'
+
+## 0.2.41
+
+- MCP server startup timeout can now be configured via MCP_TIMEOUT environment variable
+- MCP server startup no longer blocks the app from starting up
+
+## 0.2.37
+
+- New /release-notes command lets you view release notes at any time
+- `claude config add/remove` commands now accept multiple values separated by commas or spaces
+
+## 0.2.36
+
+- Import MCP servers from Claude Desktop with `claude mcp add-from-claude-desktop`
+- Add MCP servers as JSON strings with `claude mcp add-json <n> <json>`
+
+## 0.2.34
+
+- Vim bindings for text input - enable with /vim or /config
+
+## 0.2.32
+
+- Interactive MCP setup wizard: Run "claude mcp add" to add MCP servers with a step-by-step interface
+- Fix for some PersistentShell issues
+
+## 0.2.31
+
+- Custom slash commands: Markdown files in .claude/commands/ directories now appear as custom slash commands to insert prompts into your conversation
+- MCP debug mode: Run with --mcp-debug flag to get more information about MCP server errors
+
+## 0.2.30
+
+- Added ANSI color theme for better terminal compatibility
+- Fixed issue where slash command arguments weren't being sent properly
+- (Mac-only) API keys are now stored in macOS Keychain
+
+## 0.2.26
+
+- New /approved-tools command for managing tool permissions
+- Word-level diff display for improved code readability
+- Fuzzy matching for slash commands
+
+## 0.2.21
+
+- Fuzzy matching for /commands
+
+```
+
+`claude-code/LICENSE.md`:
+
+```md
+© Anthropic PBC. All rights reserved. Use is subject to Anthropic's [Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms).
+
+```
+
+`claude-code/README.md`:
+
+```md
+
+</changelog>
+
+<readme>
+
+# Claude Code
+
+![](https://img.shields.io/badge/Node.js-18%2B-brightgreen?style=flat-square) [![npm]](https://www.npmjs.com/package/@anthropic-ai/claude-code)
+
+[npm]: https://img.shields.io/npm/v/@anthropic-ai/claude-code.svg?style=flat-square
+
+Claude Code is an agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster by executing routine tasks, explaining complex code, and handling git workflows -- all through natural language commands. Use it in your terminal, IDE, or tag @claude on Github.
+
+**Learn more in the [official documentation](https://docs.anthropic.com/en/docs/claude-code/overview)**.
+
+<img src="./demo.gif" />
+
+## Get started
+
+1. Install Claude Code:
+
+```sh
+npm install -g @anthropic-ai/claude-code
+```
+
+2. Navigate to your project directory and run `claude`.
+
+## Reporting Bugs
+
+We welcome your feedback. Use the `/bug` command to report issues directly within Claude Code, or file a [GitHub issue](https://github.com/anthropics/claude-code/issues).
+
+## Data collection, usage, and retention
+
+When you use Claude Code, we collect feedback, which includes usage data (such as code acceptance or rejections), associated conversation data, and user feedback submitted via the `/bug` command.
+
+### How we use your data
+
+We may use feedback to improve our products and services, but we will not train generative models using your feedback from Claude Code. Given their potentially sensitive nature, we store user feedback transcripts for only 30 days.
+
+If you choose to send us feedback about Claude Code, such as transcripts of your usage, Anthropic may use that feedback to debug related issues and improve Claude Code's functionality (e.g., to reduce the risk of similar bugs occurring in the future).
+
+### Privacy safeguards
+
+We have implemented several safeguards to protect your data, including limited retention periods for sensitive information, restricted access to user session data, and clear policies against using feedback for model training.
+
+For full details, please review our [Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms) and [Privacy Policy](https://www.anthropic.com/legal/privacy).
+
+```
+
+`claude-code/SECURITY.md`:
+
+```md
+
+</readme>
+
+<security_policy>
+
+# Security Policy
+Thank you for helping us keep Claude Code secure!
+
+## Reporting Security Issues
+
+The security of our systems and user data is Anthropic's top priority. We appreciate the work of security researchers acting in good faith in identifying and reporting potential vulnerabilities.
+
+Our security program is managed on HackerOne and we ask that any validated vulnerability in this functionality be reported through their [submission form](https://hackerone.com/anthropic-vdp/reports/new?type=team&report_type=vulnerability).
+
+## Vulnerability Disclosure Program
+
+Our Vulnerability Program Guidelines are defined on our [HackerOne program page](https://hackerone.com/anthropic-vdp).
+
+```
+
+</security_policy>

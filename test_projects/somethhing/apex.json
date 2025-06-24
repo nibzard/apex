@@ -1,0 +1,13 @@
+{
+  "project_id": "cdbe7fcf-61f0-459f-b081-dbcfc58ada15",
+  "name": "something",
+  "description": "yes",
+  "tech_stack": [
+    "Python"
+  ],
+  "project_type": "CLI Tool",
+  "features": [
+    "core functionality"
+  ],
+  "created_at": "2025-06-09 10:43:39.325371"
+}

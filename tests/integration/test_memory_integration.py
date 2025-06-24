@@ -241,7 +241,7 @@ class TestMemorySnapshotIntegration:
         # Create and populate project
         await memory_patterns.create_project(project_id, {"name": "Snapshot Test"})
 
-        task_id = await memory_patterns.create_task(
+        await memory_patterns.create_task(
             project_id, {"description": "Original task", "priority": "medium"}
         )
 
@@ -335,7 +335,7 @@ class TestMemorySnapshotIntegration:
             severity="medium",
         )
 
-        task_id = await memory_patterns.create_task(
+        await memory_patterns.create_task(
             project_id,
             {
                 "description": "Fix performance issue",

@@ -1,0 +1,214 @@
+/* APEX TUI Styles */
+
+/* Dashboard Styles */
+#dashboard-container {
+    padding: 1;
+    height: 100%;
+}
+
+#dashboard-title {
+    text-align: center;
+    padding: 1;
+    background: $boost;
+}
+
+#top-row {
+    height: 40%;
+}
+
+#left-panel {
+    width: 60%;
+    padding: 1;
+    border: solid $primary;
+    margin-right: 1;
+}
+
+#right-panel {
+    width: 40%;
+    padding: 1;
+    border: solid $primary;
+}
+
+#activity-log {
+    height: 40%;
+    border: solid $primary;
+    margin-top: 1;
+}
+
+#quick-actions {
+    padding: 1;
+    height: 5;
+}
+
+/* Agent Screen Styles */
+#agents-container {
+    padding: 1;
+    height: 100%;
+}
+
+#agent-controls {
+    padding: 1;
+    height: 3;
+}
+
+#log-filters {
+    padding: 1;
+    height: 3;
+}
+
+#bottom-section {
+    height: 60%;
+}
+
+.half-width {
+    width: 50%;
+    padding: 1;
+    border: solid $primary;
+}
+
+#log-section {
+    margin-right: 1;
+}
+
+/* Memory Browser Styles */
+#memory-container {
+    padding: 1;
+    height: 100%;
+}
+
+#memory-tree-container {
+    width: 40%;
+    padding: 1;
+    border: solid $primary;
+    margin-right: 1;
+}
+
+#memory-content-container {
+    width: 60%;
+    padding: 1;
+    border: solid $primary;
+}
+
+#memory-search {
+    margin-bottom: 1;
+}
+
+#memory-tree {
+    height: 90%;
+    overflow-y: auto;
+}
+
+#memory-content {
+    height: 90%;
+    overflow-y: auto;
+}
+
+/* Widget Styles */
+AgentStatusWidget {
+    padding: 1;
+    height: 100%;
+}
+
+MetricsWidget {
+    padding: 1;
+    height: 100%;
+}
+
+LogViewerWidget {
+    padding: 1;
+    height: 100%;
+}
+
+MemoryBrowserWidget {
+    height: 100%;
+}
+
+AgentInteractionWidget {
+    padding: 1;
+    height: 100%;
+}
+
+#command-input {
+    height: 40%;
+    margin: 1 0;
+}
+
+#action-buttons {
+    height: 3;
+    padding: 1;
+}
+
+#response-content {
+    height: 30%;
+    overflow-y: auto;
+    padding: 1;
+    border: solid $secondary;
+}
+
+/* Progress Bars */
+.progress-bar {
+    width: 100%;
+    height: 1;
+}
+
+/* Buttons */
+Button {
+    margin: 0 1;
+}
+
+Button.primary {
+    background: $primary;
+}
+
+Button.success {
+    background: $success;
+}
+
+Button.error {
+    background: $error;
+}
+
+/* Input Fields */
+Input {
+    margin: 0 1;
+}
+
+/* Select Widgets */
+Select {
+    margin: 0 1;
+    width: 20;
+}
+
+/* Status Colors */
+.status-running {
+    color: $success;
+}
+
+.status-stopped {
+    color: $error;
+}
+
+.status-working {
+    color: $warning;
+}
+
+/* Log Level Colors */
+.log-error {
+    color: $error;
+}
+
+.log-warning {
+    color: $warning;
+}
+
+.log-info {
+    color: $primary;
+}
+
+.log-success {
+    color: $success;
+}
+
+.log-debug {
+    color: $secondary;
+}

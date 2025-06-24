@@ -82,8 +82,13 @@ class LogViewerWidget(VerticalScroll):
 
             log_patterns = [
                 "/agents/*/messages/*",
+                "/agents/*/status",  # Agent status updates
                 "/sessions/*/events/*",
                 "/tools/calls/*",
+                "/tasks/pending/*",  # Task assignments
+                "/tasks/completed/*",  # Task completions
+                "/issues/*/*",  # Reported issues
+                "/code/*",  # Code file updates
             ]
 
             for key in keys:
@@ -108,20 +113,54 @@ class LogViewerWidget(VerticalScroll):
             try:
                 data = json.loads(value.decode() if isinstance(value, bytes) else value)
                 if isinstance(data, dict):
-                    # Extract log info
+                    # Extract log info based on key type
                     timestamp = data.get("timestamp", data.get("created_at", ""))
-                    content = data.get("content", data.get("message", str(data)))
-                    level = data.get("level", "info")
 
-                    # Extract agent from key
-                    agent = "unknown"
-                    if "/agents/" in key:
-                        parts = key.split("/")
-                        if len(parts) > 2:
-                            agent = parts[2]
+                    # Determine content and level based on key pattern
+                    if "/tasks/pending/" in key:
+                        content = (
+                            f"📝 New task: {data.get('description', 'Unknown task')}"
+                        )
+                        level = "INFO"
+                        agent = data.get("assigned_to", "supervisor")
+                    elif "/tasks/completed/" in key:
+                        content = f"✅ Completed task: {data.get('description', 'Unknown task')}"
+                        level = "SUCCESS"
+                        agent = data.get("assigned_to", "unknown")
+                    elif "/issues/" in key:
+                        severity = key.split("/")[-2] if "/" in key else "medium"
+                        content = f"🐛 {severity.upper()} issue: {data.get('description', 'Unknown issue')}"
+                        level = (
+                            "WARNING" if severity in ["critical", "high"] else "INFO"
+                        )
+                        agent = "adversary"
+                    elif "/code/" in key:
+                        file_path = data.get("file_path", "unknown")
+                        content = f"💻 Code updated: {file_path}"
+                        level = "INFO"
+                        agent = "coder"
+                    elif "/agents/" in key and "/status" in key:
+                        agent_type = key.split("/")[2]
+                        status = data.get("status", "unknown")
+                        content = f"🔄 Status update: {status}"
+                        level = "INFO"
+                        agent = agent_type
+                    else:
+                        # Default processing
+                        content = data.get("content", data.get("message", str(data)))
+                        level = data.get("level", "info")
+
+                        # Extract agent from key
+                        agent = "unknown"
+                        if "/agents/" in key:
+                            parts = key.split("/")
+                            if len(parts) > 2:
+                                agent = parts[2]
 
                     log_entry = {
-                        "timestamp": timestamp,
+                        "timestamp": (
+                            timestamp if timestamp else datetime.now().isoformat()
+                        ),
                         "level": level.upper(),
                         "agent": agent,
                         "content": str(content),
@@ -199,6 +238,7 @@ class LogViewerWidget(VerticalScroll):
                 "WARN": "yellow",
                 "WARNING": "yellow",
                 "INFO": "blue",
+                "SUCCESS": "green",
                 "DEBUG": "dim",
             }
             level_color = level_colors.get(level, "white")

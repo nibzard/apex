@@ -81,24 +81,33 @@ class MetricsWidget(Static):
         """Update the displayed metrics."""
         m = self.metrics_data
 
+        # Ensure we have the expected structure
+        if not m:
+            m = {
+                "agents": {"total": 0, "running": 0, "stopped": 0},
+                "tasks": {"pending": 0, "completed": 0, "failed": 0},
+                "memory": {"keys": 0, "size": "N/A"},
+                "performance": {"cpu": "N/A", "memory": "N/A"},
+            }
+
         lines = [
             "[bold cyan]System Metrics[/bold cyan]",
             "",
             "[bold]Agents[/bold]",
-            f"  Running: [green]{m['agents']['running']}[/green] / {m['agents']['total']}",
-            f"  Stopped: [red]{m['agents']['stopped']}[/red]",
+            f"  Running: [green]{m.get('agents', {}).get('running', 0)}[/green] / {m.get('agents', {}).get('total', 0)}",
+            f"  Stopped: [red]{m.get('agents', {}).get('stopped', 0)}[/red]",
             "",
             "[bold]Tasks[/bold]",
-            f"  Pending: [yellow]{m['tasks']['pending']}[/yellow]",
-            f"  Completed: [green]{m['tasks']['completed']}[/green]",
+            f"  Pending: [yellow]{m.get('tasks', {}).get('pending', 0)}[/yellow]",
+            f"  Completed: [green]{m.get('tasks', {}).get('completed', 0)}[/green]",
             "",
             "[bold]Memory[/bold]",
-            f"  Keys: [blue]{m['memory']['keys']}[/blue]",
-            f"  Size: {m['memory']['size']}",
+            f"  Keys: [blue]{m.get('memory', {}).get('keys', 0)}[/blue]",
+            f"  Size: {m.get('memory', {}).get('size', 'N/A')}",
             "",
             "[bold]Performance[/bold]",
-            f"  CPU: {m['performance']['cpu']}",
-            f"  Memory: {m['performance']['memory']}",
+            f"  CPU: {m.get('performance', {}).get('cpu', 'N/A')}",
+            f"  Memory: {m.get('performance', {}).get('memory', 'N/A')}",
         ]
 
         self.update("\n".join(lines))
