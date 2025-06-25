@@ -45,12 +45,12 @@ This roadmap reflects the **v2.0 Orchestrator-Worker Architecture** from [`specs
   - [x] Result validation and integration
 
 ### **📋 TaskBriefing System**
-- [x] **TaskBriefing Schema** (`src/apex/core/task_briefing.py`) ✅ **FOUNDATION EXISTS**
+- [x] **TaskBriefing Schema** (`src/apex/core/task_briefing.py`) ✅ **COMPLETED**
   - [x] JSON schema definition with validation
   - [x] Context pointer management (LMDB keys)
   - [x] Deliverable specification and tracking
   - [x] Status lifecycle management
-  - [ ] **Minor fixes needed for Pydantic validation**
+  - [x] **Pydantic v2 compatibility and validation** ✅ **COMPLETED**
 
 - [ ] **Briefing Generator** (`src/apex/supervisor/briefing.py`) **(NEEDS IMPLEMENTATION)**
   - [ ] Role-specific briefing templates (Coder, Adversary)
@@ -264,18 +264,19 @@ This v2.0 architecture represents a fundamental shift toward an **AI-native orch
 3. **Ephemeral Workers**: Minimal prompts, LMDB communication, TaskBriefing consumption
 4. **Process Orchestration**: Claude CLI spawning, monitoring, and termination
 5. **Memory Foundation**: Excellent LMDB system with MCP integration
+6. **TaskBriefing Validation**: Pydantic v2 compatibility and comprehensive validation ✅ **COMPLETED**
 
 ### **🎯 IMMEDIATE NEXT STEPS**
-1. Fix minor Pydantic validation issues in TaskBriefing
+1. ~~Fix minor Pydantic validation issues in TaskBriefing~~ ✅ **COMPLETED**
 2. Implement TaskPlanner for goal decomposition
 3. Implement BriefingGenerator for task specification
 4. Connect to TUI for user interaction
 5. End-to-end testing of complete orchestration flow
 
 ### **📈 PROGRESS METRICS**
-- **Phase 1 (Foundation)**: 80% complete
+- **Phase 1 (Foundation)**: 85% complete ✅ (Pydantic fixes completed)
 - **Phase 2 (Workers)**: 100% complete ✅
-- **Overall v2.0 Progress**: ~65% complete
+- **Overall v2.0 Progress**: ~70% complete
 - **Architecture Alignment**: 100% correct ✅
 
 The foundation is solid and the architecture is correctly implemented. The remaining work focuses on completing the planning and briefing generation components to enable full orchestration capabilities.
