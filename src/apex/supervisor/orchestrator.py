@@ -42,6 +42,7 @@ class WorkerConfig:
     """Configuration for Claude CLI worker processes."""
 
     def __init__(self):
+        """Initialize WorkerConfig with default settings."""
         self.claude_command = "claude"
         self.output_format = "stream-json"
         self.max_tokens = 4000
@@ -71,6 +72,7 @@ class UtilityConfig:
     """Configuration for utility script processes."""
 
     def __init__(self):
+        """Initialize UtilityConfig with default settings."""
         self.python_command = "python"
         self.timeout_seconds = 600  # 10 minutes default
         self.max_memory_mb = 512
@@ -90,6 +92,7 @@ class ProcessInfo:
         task_id: str,
         role: Optional[TaskRole] = None,
     ):
+        """Initialize ProcessInfo with process details."""
         self.process_id = process_id
         self.process_type = process_type
         self.task_id = task_id
@@ -153,7 +156,7 @@ class ProcessOrchestrator:
     # Removed complex worker factory - using simple Claude CLI processes
 
     def _setup_mcp_config(self) -> None:
-        """Setup MCP configuration for workers."""
+        """Set up MCP configuration for workers."""
         # Use the existing LMDB MCP config
         config_path = os.path.join(os.getcwd(), "configs", "lmdb_mcp.json")
         if os.path.exists(config_path):
@@ -237,7 +240,8 @@ class ProcessOrchestrator:
             asyncio.create_task(self._monitor_process(process_info, process))
 
             self.logger.info(
-                f"Spawned Claude CLI worker {process_id} for task {briefing.task_id} (role: {briefing.role_required.value})"
+                f"Spawned Claude CLI worker {process_id} for task {briefing.task_id} "
+                f"(role: {briefing.role_required.value})"
             )
 
             return {
@@ -382,88 +386,20 @@ class ProcessOrchestrator:
     ) -> None:
         """Monitor a running process."""
         try:
-            # Monitor output streams
-            async def read_stdout():
-                if process.stdout:
-                    async for line in process.stdout:
-                        line_str = line.decode().strip()
-                        process_info.output_lines.append(line_str)
+            # Start monitoring output streams
+            stdout_task, stderr_task = await self._start_output_monitoring(
+                process_info, process
+            )
 
-                        # Log important events
-                        if "TASK COMPLETE" in line_str:
-                            self.logger.info(
-                                f"Process {process_info.process_id} reported task completion"
-                            )
-                        elif "ERROR" in line_str.upper():
-                            self.logger.warning(
-                                f"Process {process_info.process_id} error: {line_str}"
-                            )
+            # Wait for process completion with timeout handling
+            await self._wait_for_process_completion(process_info, process)
 
-            async def read_stderr():
-                if process.stderr:
-                    async for line in process.stderr:
-                        line_str = line.decode().strip()
-                        process_info.error_lines.append(line_str)
-                        self.logger.warning(
-                            f"Process {process_info.process_id} stderr: {line_str}"
-                        )
-
-            # Start reading streams
-            stdout_task = asyncio.create_task(read_stdout())
-            stderr_task = asyncio.create_task(read_stderr())
-
-            # Wait for process completion with timeout
-            try:
-                timeout = (
-                    self.worker_config.timeout_seconds
-                    if process_info.process_type == ProcessType.WORKER
-                    else self.utility_config.timeout_seconds
-                )
-
-                await asyncio.wait_for(process.wait(), timeout=timeout)
-                process_info.exit_code = process.returncode
-
-                if process.returncode == 0:
-                    process_info.status = ProcessStatus.COMPLETED
-                    self.logger.info(
-                        f"Process {process_info.process_id} completed successfully"
-                    )
-                else:
-                    process_info.status = ProcessStatus.FAILED
-                    process_info.error_message = (
-                        f"Process exited with code {process.returncode}"
-                    )
-                    self.logger.error(
-                        f"Process {process_info.process_id} failed with exit code {process.returncode}"
-                    )
-
-            except asyncio.TimeoutError:
-                process_info.status = ProcessStatus.TIMEOUT
-                process_info.error_message = "Process timeout"
-                self.logger.error(f"Process {process_info.process_id} timed out")
-
-                # Terminate the process
-                try:
-                    process.terminate()
-                    await asyncio.wait_for(process.wait(), timeout=5)
-                except:
-                    process.kill()
-                    await process.wait()
-
-            # Cancel stream reading tasks
+            # Clean up monitoring tasks
             stdout_task.cancel()
             stderr_task.cancel()
 
-            # Finalize process info
-            process_info.completed_at = datetime.now().isoformat()
-
-            # Move to history and remove from active
-            self.process_history.append(process_info)
-            if process_info.process_id in self.active_processes:
-                del self.active_processes[process_info.process_id]
-
-            # Store process history in LMDB
-            await self._store_process_info(process_info)
+            # Finalize and store process information
+            await self._finalize_process(process_info)
 
         except Exception as e:
             self.logger.error(
@@ -471,6 +407,103 @@ class ProcessOrchestrator:
             )
             process_info.status = ProcessStatus.FAILED
             process_info.error_message = str(e)
+
+    async def _start_output_monitoring(
+        self, process_info: ProcessInfo, process: asyncio.subprocess.Process
+    ) -> tuple:
+        """Start monitoring stdout and stderr streams."""
+
+        async def read_stdout():
+            if process.stdout:
+                async for line in process.stdout:
+                    line_str = line.decode().strip()
+                    process_info.output_lines.append(line_str)
+
+                    # Log important events
+                    if "TASK COMPLETE" in line_str:
+                        self.logger.info(
+                            f"Process {process_info.process_id} reported task "
+                            f"completion"
+                        )
+                    elif "ERROR" in line_str.upper():
+                        self.logger.warning(
+                            f"Process {process_info.process_id} error: {line_str}"
+                        )
+
+        async def read_stderr():
+            if process.stderr:
+                async for line in process.stderr:
+                    line_str = line.decode().strip()
+                    process_info.error_lines.append(line_str)
+                    self.logger.warning(
+                        f"Process {process_info.process_id} stderr: {line_str}"
+                    )
+
+        # Start reading streams
+        stdout_task = asyncio.create_task(read_stdout())
+        stderr_task = asyncio.create_task(read_stderr())
+
+        return stdout_task, stderr_task
+
+    async def _wait_for_process_completion(
+        self, process_info: ProcessInfo, process: asyncio.subprocess.Process
+    ) -> None:
+        """Wait for process completion with timeout handling."""
+        try:
+            timeout = (
+                self.worker_config.timeout_seconds
+                if process_info.process_type == ProcessType.WORKER
+                else self.utility_config.timeout_seconds
+            )
+
+            await asyncio.wait_for(process.wait(), timeout=timeout)
+            process_info.exit_code = process.returncode
+
+            if process.returncode == 0:
+                process_info.status = ProcessStatus.COMPLETED
+                self.logger.info(
+                    f"Process {process_info.process_id} completed successfully"
+                )
+            else:
+                process_info.status = ProcessStatus.FAILED
+                process_info.error_message = (
+                    f"Process exited with code {process.returncode}"
+                )
+                self.logger.error(
+                    f"Process {process_info.process_id} failed with exit code "
+                    f"{process.returncode}"
+                )
+
+        except asyncio.TimeoutError:
+            process_info.status = ProcessStatus.TIMEOUT
+            process_info.error_message = "Process timeout"
+            self.logger.error(f"Process {process_info.process_id} timed out")
+
+            # Terminate the process
+            await self._terminate_timed_out_process(process)
+
+    async def _terminate_timed_out_process(
+        self, process: asyncio.subprocess.Process
+    ) -> None:
+        """Terminate a process that has timed out."""
+        try:
+            process.terminate()
+            await asyncio.wait_for(process.wait(), timeout=5)
+        except Exception:
+            process.kill()
+            await process.wait()
+
+    async def _finalize_process(self, process_info: ProcessInfo) -> None:
+        """Finalize process information and move to history."""
+        process_info.completed_at = datetime.now().isoformat()
+
+        # Move to history and remove from active
+        self.process_history.append(process_info)
+        if process_info.process_id in self.active_processes:
+            del self.active_processes[process_info.process_id]
+
+        # Store process history in LMDB
+        await self._store_process_info(process_info)
 
     async def check_process_status(self, process_id: str) -> Dict[str, Any]:
         """Check the status of a process."""
@@ -637,7 +670,7 @@ class ProcessOrchestrator:
             try:
                 metrics_data = await self.memory.mcp.read(metrics_key)
                 metrics = json.loads(metrics_data) if metrics_data else {}
-            except:
+            except Exception:
                 metrics = {}
 
             # Update counters
@@ -686,7 +719,7 @@ class ProcessOrchestrator:
                         if started_at < cutoff_date:
                             await self.memory.mcp.delete(key)
                             deleted_count += 1
-                except:
+                except Exception:
                     continue
 
             return deleted_count

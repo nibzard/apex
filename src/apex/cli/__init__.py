@@ -1,5 +1,5 @@
 """CLI module for APEX."""
 
-from apex.cli.commands import main
+from apex.cli.integrated import main
 
 __all__ = ["main"]

@@ -5,7 +5,16 @@
       "Bash(uv run pytest tests/unit/core/test_memory.py::TestMemoryPatterns::test_create_project -v)",
       "Bash(git push:*)",
       "Bash(git checkout:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(uv run ruff:*)",
+      "Bash(uv run:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv build)",
+      "Bash(ls:*)",
+      "Bash(uv add:*)",
+      "Bash(uv pip:*)"
     ],
     "deny": []
   }

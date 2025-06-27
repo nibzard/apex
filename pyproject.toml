@@ -19,7 +19,7 @@ classifiers = [
 
 dependencies = [
     # Core
-    "lmdb>=1.4.0", # Memory store
+    "lmdb-mcp @ file:///Users/nikola/dev/apex/lmdb-mcp", # LMDB MCP server for memory store (submodule)
     "msgpack>=1.0.0", # Efficient serialization
     "pydantic>=2.5.0", # Data validation
     # CLI/TUI
@@ -97,10 +97,15 @@ include = [
     "templates/**/*",
 ]
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.uv]
 dev-dependencies = [
     "ipython>=8.18.0",
     "pre-commit>=4.2.0",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov>=6.1.1",
     "pytest-xdist>=3.5.0",
 ]
 

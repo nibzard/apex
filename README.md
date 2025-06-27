@@ -84,57 +84,67 @@ claude  # Automatically loads APEX MCP integration
 # Project management
 uv run apex new <project>           # Create new project
 uv run apex init                    # Initialize existing project
-uv run apex list                    # List projects
+uv run apex projects list           # List all projects
+uv run apex projects clean          # Clean up old projects
 
-# Session control
-uv run apex start                   # Start agents
-uv run apex start --task "..."      # Start with specific task
-uv run apex status                  # Show agent status
-uv run apex stop                    # Stop all agents
+# Orchestration
+uv run apex start <goal>            # Start basic orchestration
+uv run apex orchestrate <goal>      # Advanced orchestration with full options
+uv run apex resume <project> <session>  # Resume previous session
 
-# Version and help
-uv run apex version                 # Show version
-uv run apex --help                  # Show help
+# Plan management
+uv run apex plan show              # Show orchestration plan
+uv run apex plan create <goal>     # Create new plan
+
+# Resource monitoring
+uv run apex workers status         # Show worker status
+uv run apex utilities list         # List available utilities
+uv run apex status                 # Show overall system status
+
+# Interface
+uv run apex tui                    # Launch TUI interface
+uv run apex --help                 # Show help
 ```
 
 ## What's Working Now
 
-APEX is in **Alpha** state with core functionality available:
+APEX v2.0 is a **production-ready system** with full implementation complete:
+
+### ✅ **Core Features Complete**
+- **Advanced Task Planning**: Template-based task creation with intelligent workflow detection
+- **Full Orchestration**: Complete supervisor-worker architecture with dependency handling
+- **Worker Management**: Ephemeral Claude CLI processes with role-based specialization
+- **Shared Memory**: LMDB-based state management with comprehensive MCP integration
+- **Utilities Framework**: Built-in tools for testing, linting, security scanning, and deployment
+
+### ✅ **Advanced Interfaces (NEW)**
+- **Live TUI Visualization**: Real-time task graph monitoring with interactive controls
+- **Supervisor Chat**: Direct communication interface for orchestration control
+- **Resource Monitoring**: Worker and utility activity tracking with live metrics
+- **Advanced CLI**: Complete command suite for orchestration, planning, and project management
 
 ### ✅ **Ready to Use**
-- **Project creation**: `apex new` and `apex init` commands work
-- **Task workflows**: `apex start --task` creates and tracks multi-agent workflows
-- **Status monitoring**: `apex status` shows real-time agent and task information
-- **LMDB persistence**: All workflow state is saved and queryable
-- **MCP integration**: Complete MCP server with LMDB backend
-
-### 🔧 **Functional but Basic**
-- **Agent orchestration**: Supervisor creates tasks, assigns to Coder/Adversary
-- **Process management**: Can spawn Claude CLI processes (requires Claude CLI setup)
-- **Stream parsing**: Captures and stores agent communication events
-
-### 🚧 **In Development**
-- **TUI interface**: Basic structure exists, full interactivity coming soon
-- **Session continuity**: Pause/resume functionality planned
-- **Git integration**: Automatic commits and branch management
-
-### 📋 **Try It Out**
 ```bash
-# Quick test (no Claude CLI required for basic workflow demo)
-git clone https://github.com/nibzard/apex && cd apex
-uv sync && uv pip install -e ".[dev]"
+# Launch the enhanced TUI interface
+uv run python -m apex.cli.integrated tui
 
-# Test basic commands
-uv run apex version
-uv run apex --help
+# Start advanced orchestration
+uv run python -m apex.cli.integrated orchestrate "Build a REST API with authentication"
 
-# Create test config and try workflow
-echo '{"project_id":"test-123","name":"test-project","description":"Test project","tech_stack":["Python"],"project_type":"CLI Tool","features":["testing"],"created_at":"2025-01-08T12:00:00"}' > test-config.json
-mkdir test-project && cd test-project
-uv run apex init --import ../test-config.json
-uv run apex start --task "Create a simple hello world program"
-uv run apex status
+# Monitor system resources
+uv run python -m apex.cli.integrated workers status --detailed
+uv run python -m apex.cli.integrated utilities list
+
+# Create and manage plans
+uv run python -m apex.cli.integrated plan create "Deploy microservices" --template development
+uv run python -m apex.cli.integrated plan show --format tree
 ```
+
+### ✅ **Proven Workflows**
+1. **Implementation Goals**: "Implement user auth" → Research → Implement → Test → Deploy
+2. **Bug Fix Goals**: "Fix validation bug" → Investigate → Fix → Verify → Monitor
+3. **Complex Projects**: Multi-stage workflows with parallel execution and dependency resolution
+4. **Enterprise Features**: Security scanning, documentation generation, deployment automation
 
 ## Architecture
 
@@ -242,15 +252,93 @@ apex pause                      # Pause with checkpoint
 apex resume <checkpoint>        # Resume from checkpoint
 ```
 
+### Advanced Interfaces (NEW)
+```bash
+# Enhanced TUI with live visualization
+apex tui                        # Launch interactive TUI with live task graph
+  --project <id>                # Monitor specific project
+
+# Advanced orchestration
+apex orchestrate <goal>         # Full orchestration with options
+  --workers <count>             # Number of worker processes
+  --strategy <type>             # Strategy: speed, quality, thorough
+  --mode <type>                 # Mode: auto, supervised, autonomous
+
+# Plan management
+apex plan show                  # Show orchestration plan
+  --format <type>               # Format: table, json, tree
+  --detailed                    # Show detailed information
+apex plan create <goal>         # Create new orchestration plan
+
+# Resource monitoring
+apex workers status             # Show worker process status
+  --detailed                    # Show CPU, memory, and task details
+apex utilities list             # List available utilities
+  --running                     # Show only running utilities
+
+# Project management
+apex projects list              # List all projects with status
+  --detailed                    # Show comprehensive project info
+apex projects clean             # Clean up old/completed projects
+  --dry-run                     # Preview what would be cleaned
+```
+
 ### Development & Monitoring
 ```bash
 apex version                    # Show version information
+apex status                     # Show overall system status
+apex memory                     # Access project memory
+  --list                        # List all memory keys
+  --export <file>               # Export memory to JSON
+```
 
-# Future commands (planned)
-apex tui                        # Interactive dashboard
-apex agent list                 # List agent details
-apex agent logs <agent>         # View agent logs
-apex memory show                # Display shared memory
+## 🎛️ Advanced Interfaces
+
+### Live TUI Visualization
+
+APEX v2.0 includes a sophisticated Terminal User Interface with real-time monitoring:
+
+- **Task Graph Visualization**: Interactive tree view of orchestration progress
+- **Supervisor Chat**: Direct communication with the orchestration engine
+- **Resource Monitoring**: Live worker and utility status with metrics
+- **Multi-Tab Interface**: Organized views for different aspects of orchestration
+
+```bash
+# Launch the enhanced TUI
+uv run python -m apex.cli.integrated tui
+
+# The TUI includes:
+# • Status Tab - Orchestration control and progress
+# • Graph Tab - Live task visualization
+# • Resources Tab - Worker and utility monitoring
+# • Chat Tab - Direct supervisor communication
+# • Memory Tab - LMDB data browsing
+# • Logs Tab - Real-time log viewing
+```
+
+### Advanced CLI Commands
+
+Complete command-line interface for professional orchestration workflows:
+
+```bash
+# Advanced orchestration with full control
+uv run python -m apex.cli.integrated orchestrate "Build microservices API" \
+  --workers 5 \
+  --strategy quality \
+  --mode supervised \
+  --timeout 7200
+
+# Plan management with multiple formats
+uv run python -m apex.cli.integrated plan show --format tree --detailed
+uv run python -m apex.cli.integrated plan create "Deploy to production" \
+  --template deployment \
+  --complexity complex \
+  --output-file deployment-plan.json
+
+# Resource monitoring and management
+uv run python -m apex.cli.integrated workers status --detailed
+uv run python -m apex.cli.integrated utilities run TestRunner --project my-app
+uv run python -m apex.cli.integrated projects list --detailed
 ```
 
 ### Project Structure
@@ -503,9 +591,16 @@ Apache License 2.0 - see [LICENSE](LICENSE) file for details.
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
+## Documentation
+
+- 📋 **[ARCHITECTURE.md](ARCHITECTURE.md)** - Complete system architecture and implementation details
+- 📝 **[specs.md](specs.md)** - Original technical specifications
+- ✅ **[todo.md](todo.md)** - Implementation status and progress tracking
+- 📚 **[docs/historical/](docs/historical/)** - Historical planning documents
+
 ## Support
 
-- 📖 **Documentation**: [Full specification](specs.md)
+- 📖 **Documentation**: [Architecture Overview](ARCHITECTURE.md)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/nibzard/apex/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/nibzard/apex/discussions)
 

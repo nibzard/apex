@@ -1,0 +1,3 @@
+[submodule "lmdb-mcp"]
+	path = lmdb-mcp
+	url = https://github.com/nibzard/lmdb-mcp.git

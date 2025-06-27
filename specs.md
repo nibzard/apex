@@ -13,21 +13,25 @@ The Orchestrator-Worker Architecture
 
 ## Table of Contents
 
-1. [Introduction: A New Paradigm for AI Development](#1-introduction-a-new-paradigm-for-ai-development)
+1. [Introduction: Simple, Effective AI Orchestration](#1-introduction-simple-effective-ai-orchestration)
 2. [Core Architectural Principles](#2-core-architectural-principles)
 3. [System Components](#3-system-components)
 4. [The Core Orchestration Loop](#4-the-core-orchestration-loop)
 5. [Component Deep Dive](#5-component-deep-dive)
-6. [The TaskBriefing: Our Core API Contract](#6-the-taskbriefing-our-core-api-contract)
-7. [Implementation Roadmap](#7-implementation-roadmap)
+6. [Simplified Implementation](#6-simplified-implementation)
+7. [Implementation Status](#7-implementation-status)
 
-## 1. Introduction: A New Paradigm for AI Development
+## 1. Introduction: Simple, Effective AI Orchestration
 
-Welcome to APEX. To understand this project, it's essential to discard the common metaphor of "AI agents as a team of colleagues." While that model is useful for simple demonstrations, it's inefficient, costly, and fragile in practice.
+APEX v2.0 implements a **simplified Orchestrator-Worker architecture** that focuses on practical AI development automation. Instead of complex multi-agent conversations, APEX uses a single intelligent **Supervisor** that breaks down goals into discrete tasks and orchestrates **ephemeral Workers** to execute them.
 
-Instead, imagine a master artisan at their workbench. The artisan (`The Supervisor`) is the sole creative force, holding the entire vision for the project. The workbench is our shared memory (`LMDB`). On the wall are highly specialized, magical tools (`Workers` and `Utilities`). When the artisan needs to carve a complex piece, they pick up the "sentient chisel" (`Coder Worker`), give it a precise instruction, and it performs the intricate work. When they need to sand the wood, they use a simple, deterministic "power sander" (`Utility`). The artisan directs everything, but never does the manual labor.
+**Key Benefits:**
+- **Simple but Powerful**: 3-5 task workflows instead of complex dependency graphs
+- **Cost Effective**: Workers are spawned only when needed and terminated after completion
+- **Transparent**: Full audit trail of all orchestration decisions and task execution
+- **Reliable**: Deterministic task planning with well-defined dependencies
 
-**This is the APEX philosophy.** We are building a system with a single, persistent, intelligent **Orchestrator** (the `Supervisor`) that invokes **ephemeral, specialized workers** to perform tasks. This architecture is designed for maximum control, efficiency, and transparency. A new developer on this project is not joining a team of three agents; they are building the intelligent workbench and the magical tools for our master artisan, the `Supervisor`.
+**The APEX Philosophy:** One persistent orchestrator managing ephemeral, specialized workers through a shared memory system. This creates maximum control and efficiency while remaining simple to understand and maintain.
 
 ## 2. Core Architectural Principles
 
@@ -84,13 +88,25 @@ graph TD
 
 The `Supervisor` is the engine of APEX. Its operation follows a continuous, five-stage loop for every task it undertakes:
 
-1.  **PLAN:** Based on the user's high-level goal, the `Supervisor` breaks the work down into a directed graph of discrete, single-responsibility tasks. It determines the correct `Worker` or `Utility` for each task.
-2.  **CONSTRUCT BRIEFING:** For a task requiring an `Intelligent Worker`, the `Supervisor` creates a `TaskBriefing` document in LMDB. This briefing is the complete, self-contained work order, containing the objective and pointers to all necessary context within LMDB.
-3.  **INVOKE:** The `Supervisor` spawns the appropriate executor:
-    *   For an `Intelligent Worker`, it runs a `claude` CLI command with a minimal, static prompt that simply points the worker to its `TaskBriefing` key in LMDB.
-    *   For a `Deterministic Utility`, it runs a `python` script with command-line arguments.
-4.  **MONITOR:** The `Supervisor` captures the `stdout` of the invoked process in real-time. For `Workers`, this is the `stream-json` feed, which is parsed and logged to provide a live, transparent audit trail of the worker's "thoughts" and actions.
-5.  **INTEGRATE:** Once the ephemeral process exits, the `Supervisor` inspects the deliverables (new LMDB keys, files, etc.). It validates the output, integrates the results into the main project state, updates its plan, and proceeds to the next task.
+1.  **PLAN:** The `Supervisor` analyzes the user's goal and creates a simple task sequence (3-5 tasks) using template-based logic:
+    - **Implementation goals** → Research → Implement → Test
+    - **Bug fix goals** → Investigate → Fix → Verify
+    - **Generic goals** → Analyze → Implement → Review
+
+2.  **CONSTRUCT:** For each task, the `Supervisor` creates a `TaskBriefing` with:
+    - Clear objective and role assignment (Coder or Adversary)
+    - Context pointers to relevant LMDB data
+    - Required deliverable specifications
+    - Quality criteria for completion
+
+3.  **INVOKE:** The `Supervisor` spawns Claude CLI workers with minimal prompts:
+    ```bash
+    claude -p "You are a {role} worker. Read your briefing from LMDB key {briefing_key} and complete the task."
+    ```
+
+4.  **MONITOR:** Real-time monitoring of worker stdout/stderr with stream-json parsing for transparency.
+
+5.  **INTEGRATE:** Validate deliverables, mark tasks complete, and proceed to the next task in sequence.
 
 ## 5. Component Deep Dive
 
@@ -155,100 +171,134 @@ The `Supervisor` is the engine of APEX. Its operation follows a continuous, five
     *   **Privileged Access:** They have direct access to the system (LMDB, file system, APIs) as needed. This is safe because their logic is hard-coded and not subject to LLM "hallucinations."
     *   **Fast & Cheap:** They avoid the overhead of a full `claude` CLI session and can use cheaper, faster models for tasks like summarization.
 
-## 6. The `TaskBriefing`: Our Core API Contract
+## 6. Simplified Implementation
 
-The `TaskBriefing` is the most critical data structure in APEX. It is the well-defined API contract between the `Supervisor` and its `Intelligent Workers`.
+### TaskBriefing Structure
 
-**Location:** `/tasks/briefings/<task_id>`
-**Format:** JSON
+The `TaskBriefing` serves as the communication protocol between Supervisor and Workers:
 
 ```json
 {
-  "task_id": "coder-20240625-007",
-  "role_required": "Coder", // "Coder" or "Adversary"
-  "objective": "Implement the user login endpoint, including password verification and JWT generation, based on the approved schema.",
-
-  // Pointers to relevant information within LMDB. The worker will read these.
+  "task_id": "task-20250625-1400-implement",
+  "role_required": "Coder",
+  "objective": "Implement user authentication system",
+  "priority": "high",
   "context_pointers": {
-    "approved_schema": "/memory/artifacts/auth_schema_v2.json",
-    "coding_standards": "/docs/style_guide.md",
-    "related_feature_summary": "/summaries/features/registration.md"
+    "project_config": "/projects/proj-001/config",
+    "coding_standards": "/projects/proj-001/docs/coding_standards.md"
   },
-
-  // A list of required outputs. The worker MUST create these keys.
   "deliverables": [
     {
       "type": "code",
-      "description": "The main Python file for the login endpoint.",
-      "output_key": "/tasks/outputs/task-007/code/login_endpoint.py"
-    },
-    {
-      "type": "unit_test",
-      "description": "The pytest file to validate the login endpoint.",
-      "output_key": "/tasks/outputs/task-007/tests/test_login.py"
-    },
-    {
-      "type": "status_report",
-      "description": "A brief report on implementation choices and potential issues.",
-      "output_key": "/tasks/outputs/task-007/report.md"
+      "description": "Authentication implementation",
+      "output_key": "/tasks/outputs/task-001/code/",
+      "required": true
     }
   ],
-
-  "status": "pending_invocation" // Managed by the Supervisor
+  "dependencies": ["task-20250625-1400-research"],
+  "estimated_duration": 90,
+  "status": "pending"
 }
 ```
 
-## 7. Implementation Roadmap
+### Simple Task Templates
 
-This project should be built in three logical phases to ensure a solid foundation.
+**Implementation Tasks**: Research → Implement → Test
+```
+1. Research and plan approach (Coder, 30min)
+2. Implement core functionality (Coder, 90min)
+3. Test and validate implementation (Adversary, 45min)
+```
 
-**Phase 1: The Foundation - The Supervisor & The World State**
-1.  **Implement the Core LMDB Client & MCP Server:** Establish the central nervous system.
-2.  **Develop the `Supervisor` Orchestration Engine:** Build the main loop and the process manager for invoking workers/utilities.
-3.  **Build the TUI "Control Panel":** Create the user's window into the `Supervisor`'s mind, focusing on the chat pane and the live plan view.
+**Bug Fix Tasks**: Investigate → Fix → Verify
+```
+1. Investigate and reproduce issue (Adversary, 30min)
+2. Implement fix (Coder, 60min)
+3. Verify fix and test for regressions (Adversary, 30min)
+```
 
-**Phase 2: The Intelligent Workforce**
-1.  **Finalize the `TaskBriefing` Schema:** Solidify the API contract.
-2.  **Implement the `Coder` Worker Flow:** Teach the `Supervisor` how to generate coding briefings and integrate the results.
-3.  **Implement the `Adversary` Worker Flow:** Teach the `Supervisor` how to generate review briefings and handle the feedback loop.
+### Worker Communication
 
-**Phase 3: The Toolkit & Optimization**
-1.  **Create the `apex.tools` Module:** Set up the directory for deterministic utilities.
-2.  **Implement the `Archivist` Utility:** Build our first deterministic utility as a proof-of-concept for direct API calls and DB access.
-3.  **Expand the Toolkit:** Begin developing other key utilities like a `TestRunner` and `GitManager` to further offload deterministic work from the LLM agents.
+Workers receive minimal prompts:
+```bash
+claude -p "You are a {role} worker. Read your briefing from LMDB key {briefing_key} using mcp__lmdb__read. Complete the task and output deliverables to the specified keys."
+```
+
+This simplified approach provides:
+- **Clarity**: Each task has a single, well-defined purpose
+- **Reliability**: Sequential execution eliminates complex dependency issues
+- **Efficiency**: Template-based planning reduces token usage
+- **Maintainability**: Simple logic is easier to debug and extend
+
+## 7. Implementation Status
+
+**✅ COMPLETED (v2.0 Simplified)**
+
+**Phase 1: Core Foundation**
+- ✅ **SupervisorEngine**: 5-stage orchestration loop with simplified planning
+- ✅ **TaskPlanner**: Template-based task creation (implementation, bug fix, generic)
+- ✅ **BriefingGenerator**: Complete TaskBriefing creation with context collection
+- ✅ **ProcessOrchestrator**: Claude CLI worker spawning and monitoring
+- ✅ **LMDB Memory System**: Comprehensive shared memory with MCP integration
+- ✅ **TaskBriefing Schema**: Complete Pydantic v2 validation system
+
+**Phase 2: Working System**
+- ✅ **End-to-End Orchestration**: Goal → Tasks → Workers → Results
+- ✅ **Simple CLI Interface**: `apex start <goal>` for immediate orchestration
+- ✅ **Task Dependencies**: Sequential execution with proper dependency handling
+- ✅ **Worker Communication**: Claude CLI processes with TaskBriefing consumption
+
+**🎯 NEXT STEPS (Optional Enhancements)**
+- **TUI Integration**: Connect SupervisorEngine to visual interface
+- **Utilities Framework**: Add deterministic tools for common operations
+- **Advanced Planning**: More sophisticated task decomposition
+- **Multi-project Support**: Project isolation and management
+
+**🚀 QUICK START**
+```bash
+# Simple orchestration test
+python apex_simple.py test
+
+# Interactive mode
+python apex_simple.py interactive
+
+# Full demonstration
+python apex_simple.py demo
+```
 
 ---
 
-## Current Implementation Status
+## Current Status: Working v2.0 Implementation
 
-Based on the codebase analysis, the current APEX implementation provides an excellent foundation for the v2.0 architecture:
+### ✅ **COMPLETED FEATURES**
 
-### ✅ **Strong Alignment - Ready to Extend**
-- **Memory Management System**: Comprehensive LMDB patterns with schemas, snapshots, and cleanup
-- **Process Management**: Robust Claude CLI process spawning and monitoring
-- **MCP Integration**: FastMCP-based LMDB server with comprehensive tool suite
-- **Agent System**: Well-designed specialization framework with role-based prompts
+**Core Orchestration**
+- **Simple Task Planning**: Template-based task creation for common scenarios
+- **Sequential Execution**: Proper dependency handling with 3-5 task workflows
+- **Worker Management**: Claude CLI process spawning with minimal prompts
+- **Memory Integration**: LMDB-based shared state with MCP tools
+- **TaskBriefing System**: Complete worker communication protocol
 
-### 🔄 **Partial Alignment - Needs Refactoring**
-- **Orchestration Engine**: Needs enhancement for task graph execution and distributed coordination
-- **Session Management**: Requires multi-session support and resource isolation
-- **Event System**: Needs expansion to distributed event routing and sourcing
-- **CLI Interface**: Requires cluster management and multi-node capabilities
+**User Interface**
+- **CLI Commands**: `apex start <goal>`, `apex status`, `apex memory`
+- **Interactive Mode**: Real-time goal input and orchestration
+- **Progress Tracking**: Task completion monitoring and reporting
+- **Demonstration Mode**: Example workflows for different goal types
 
-### 🆕 **Missing Components - New Development**
-- **Distributed Task Queue**: Priority-based task scheduling with dependencies
-- **Resource Management**: Auto-scaling and resource pool management
-- **Multi-Node Coordination**: Distributed consensus and node discovery
-- **Advanced Monitoring**: Production-grade metrics, tracing, and dashboards
-- **Security & Multi-Tenancy**: Enterprise authentication and project isolation
+**Architecture Benefits Realized**
+- **Simplicity**: Complex strategy patterns replaced with straightforward templates
+- **Reliability**: Deterministic task sequencing instead of complex graphs
+- **Efficiency**: Ephemeral workers spawned only when needed
+- **Transparency**: Full logging of orchestration decisions and task execution
 
-## Migration Strategy
+### 🎯 **PROVEN FUNCTIONALITY**
 
-The current codebase provides strong foundations that can be enhanced rather than rebuilt. The key is to:
+The current implementation successfully demonstrates:
+1. **Goal Analysis**: "Implement user auth" vs "Fix login bug" create different task sequences
+2. **Task Orchestration**: Research → Implement → Test with proper dependencies
+3. **Worker Dispatch**: Coder and Adversary roles assigned based on task type
+4. **End-to-End Flow**: Complete goal → tasks → execution → completion cycle
 
-1. **Leverage existing strengths**: Memory patterns, process management, MCP integration
-2. **Refactor orchestration**: Transform from simple workflow to intelligent task dispatch
-3. **Add missing components**: Build distributed coordination and enterprise features
-4. **Maintain compatibility**: Ensure existing functionality continues working during transition
+### 🚀 **READY FOR USE**
 
-This v2.0 specification provides a clear path forward while preserving the significant investment in the current well-designed architecture.
+APEX v2.0 is now a **working system** that demonstrates the core Orchestrator-Worker architecture with practical simplicity. The focus has shifted from complex features to reliable, understandable automation that solves real development workflow problems.

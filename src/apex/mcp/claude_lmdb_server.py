@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""LMDB MCP Server for Claude Code integration."""
+"""LMDB MCP Server for Claude Code integration.
+
+This module provides APEX-specific functionality using the external lmdb-mcp package,
+including APEX-specific tools like project_status.
+"""
 
 from __future__ import annotations
 
 import asyncio
 import json
 import os
-from pathlib import Path
-from typing import Any, Optional
 
-import lmdb
-from mcp.server.fastmcp import FastMCP
+# Import from the external lmdb-mcp package
+from lmdb_mcp.server import LMDBMCPServer
 
 
-class ClaudeLMDBServer:
-    """LMDB MCP server designed for Claude Code integration."""
+class ClaudeLMDBServer(LMDBMCPServer):
+    """LMDB MCP server designed for Claude Code integration with APEX features."""
 
     def __init__(self, db_path: str, map_size: int = 1024 * 1024 * 1024):  # 1GB default
         """Initialize LMDB MCP server for Claude Code.
@@ -24,167 +26,15 @@ class ClaudeLMDBServer:
             map_size: Maximum size of LMDB database (default: 1GB)
 
         """
-        self.db_path = Path(db_path)
-        self.map_size = map_size
-        self.env: Optional[lmdb.Environment] = None
-        self.db: Optional[Any] = None
+        # Initialize with Claude Code-compatible settings
+        super().__init__(db_path, map_size, tool_prefix="mcp__lmdb__")
+        self._register_apex_tools()
 
-        # Create FastMCP server with stdio transport for Claude Code
-        self.app = FastMCP("APEX LMDB")
-        self._register_tools()
+    def _register_apex_tools(self) -> None:
+        """Register APEX-specific MCP tools."""
 
-    def _ensure_db(self) -> None:
-        """Ensure database is initialized."""
-        if self.env is None:
-            # Create parent directory if it doesn't exist
-            self.db_path.parent.mkdir(parents=True, exist_ok=True)
-
-            # Open LMDB environment
-            self.env = lmdb.open(
-                str(self.db_path), map_size=self.map_size, max_dbs=10, create=True
-            )
-            self.db = self.env.open_db(b"apex_data", create=True)
-
-    def _register_tools(self) -> None:
-        """Register all MCP tools for APEX."""
-
-        @self.app.tool()
-        async def mcp__lmdb__read(key: str) -> str:
-            """Read value from APEX LMDB by key.
-
-            Args:
-                key: The key to read from LMDB
-
-            Returns:
-                The value as a string, or null if not found
-
-            """
-            try:
-                self._ensure_db()
-                with self.env.begin(db=self.db) as txn:
-                    value = txn.get(key.encode())
-                    if value is None:
-                        return "null"
-                    return value.decode()
-            except Exception as e:
-                return json.dumps({"error": f"Failed to read key '{key}': {str(e)}"})
-
-        @self.app.tool()
-        async def mcp__lmdb__write(key: str, value: str) -> str:
-            """Write value to APEX LMDB.
-
-            Args:
-                key: The key to write to
-                value: The value to write
-
-            Returns:
-                Success confirmation
-
-            """
-            try:
-                self._ensure_db()
-                with self.env.begin(write=True, db=self.db) as txn:
-                    txn.put(key.encode(), value.encode())
-                return json.dumps({"success": True, "key": key})
-            except Exception as e:
-                return json.dumps({"error": f"Failed to write key '{key}': {str(e)}"})
-
-        @self.app.tool()
-        async def mcp__lmdb__list(prefix: str = "") -> str:
-            """List keys with optional prefix from APEX LMDB.
-
-            Args:
-                prefix: Optional prefix to filter keys (default: all keys)
-
-            Returns:
-                JSON array of matching keys
-
-            """
-            try:
-                self._ensure_db()
-                keys = []
-                with self.env.begin(db=self.db) as txn:
-                    cursor = txn.cursor()
-                    if prefix:
-                        start_key = prefix.encode()
-                        if cursor.set_range(start_key):
-                            for key, _ in cursor:
-                                key_str = key.decode()
-                                if not key_str.startswith(prefix):
-                                    break
-                                keys.append(key_str)
-                    else:
-                        keys = [key.decode() for key, _ in cursor]
-                return json.dumps(keys)
-            except Exception as e:
-                return json.dumps({"error": f"Failed to list keys: {str(e)}"})
-
-        @self.app.tool()
-        async def mcp__lmdb__delete(key: str) -> str:
-            """Delete a key from APEX LMDB.
-
-            Args:
-                key: The key to delete
-
-            Returns:
-                Success confirmation
-
-            """
-            try:
-                self._ensure_db()
-                with self.env.begin(write=True, db=self.db) as txn:
-                    deleted = txn.delete(key.encode())
-                return json.dumps({"success": True, "deleted": deleted, "key": key})
-            except Exception as e:
-                return json.dumps({"error": f"Failed to delete key '{key}': {str(e)}"})
-
-        @self.app.tool()
-        async def mcp__lmdb__cursor_scan(prefix: str = "", limit: int = 100) -> str:
-            """Scan APEX LMDB keys and values with optional prefix.
-
-            Args:
-                prefix: Optional prefix to filter keys
-                limit: Maximum number of results to return (default: 100)
-
-            Returns:
-                JSON array of key-value pairs
-
-            """
-            try:
-                self._ensure_db()
-                results = []
-                count = 0
-
-                with self.env.begin(db=self.db) as txn:
-                    cursor = txn.cursor()
-                    if prefix:
-                        start_key = prefix.encode()
-                        if cursor.set_range(start_key):
-                            for key, value in cursor:
-                                if count >= limit:
-                                    break
-                                key_str = key.decode()
-                                if not key_str.startswith(prefix):
-                                    break
-                                results.append(
-                                    {"key": key_str, "value": value.decode()}
-                                )
-                                count += 1
-                    else:
-                        for key, value in cursor:
-                            if count >= limit:
-                                break
-                            results.append(
-                                {"key": key.decode(), "value": value.decode()}
-                            )
-                            count += 1
-
-                return json.dumps({"results": results, "count": len(results)})
-            except Exception as e:
-                return json.dumps({"error": f"Failed to scan: {str(e)}"})
-
-        @self.app.tool()
-        async def mcp__lmdb__project_status(project_id: str) -> str:
+        @self.app.tool(name="mcp__lmdb__project_status")
+        async def project_status(project_id: str) -> str:
             """Get APEX project status and summary.
 
             Args:
@@ -195,57 +45,48 @@ class ClaudeLMDBServer:
 
             """
             try:
-                self._ensure_db()
+                await self._ensure_db()
 
                 # Get project config
                 project_key = f"/projects/{project_id}/config"
-                with self.env.begin(db=self.db) as txn:
-                    project_data = txn.get(project_key.encode())
-                    if not project_data:
-                        return json.dumps({"error": f"Project {project_id} not found"})
+                project_data = await self._read(project_key)
+                if not project_data:
+                    return json.dumps({"error": f"Project {project_id} not found"})
 
                 project_config = json.loads(project_data.decode())
 
                 # Get task counts
                 task_counts = {"pending": 0, "in_progress": 0, "completed": 0}
                 task_prefix = f"/projects/{project_id}/tasks/"
+                task_keys = await self._list_keys(task_prefix)
 
-                with self.env.begin(db=self.db) as txn:
-                    cursor = txn.cursor()
-                    start_key = task_prefix.encode()
-                    if cursor.set_range(start_key):
-                        for key, value in cursor:
-                            key_str = key.decode()
-                            if not key_str.startswith(task_prefix):
-                                break
-                            try:
-                                task_data = json.loads(value.decode())
-                                status = task_data.get("status", "unknown")
-                                if status in task_counts:
-                                    task_counts[status] += 1
-                            except:
-                                pass
+                for task_key in task_keys:
+                    task_data = await self._read(task_key)
+                    if task_data:
+                        try:
+                            task_info = json.loads(task_data.decode())
+                            status = task_info.get("status", "unknown")
+                            if status in task_counts:
+                                task_counts[status] += 1
+                        except:
+                            pass
 
                 # Get agent status
                 agent_statuses = {}
                 agent_prefix = f"/projects/{project_id}/agents/"
+                agent_keys = await self._list_keys(agent_prefix)
 
-                with self.env.begin(db=self.db) as txn:
-                    cursor = txn.cursor()
-                    start_key = agent_prefix.encode()
-                    if cursor.set_range(start_key):
-                        for key, value in cursor:
-                            key_str = key.decode()
-                            if not key_str.startswith(agent_prefix):
-                                break
-                            try:
-                                agent_name = key_str.split("/")[-1]
-                                agent_data = json.loads(value.decode())
-                                agent_statuses[agent_name] = agent_data.get(
-                                    "status", "unknown"
-                                )
-                            except:
-                                pass
+                for agent_key in agent_keys:
+                    agent_data = await self._read(agent_key)
+                    if agent_data:
+                        try:
+                            agent_name = agent_key.split("/")[-1]
+                            agent_info = json.loads(agent_data.decode())
+                            agent_statuses[agent_name] = agent_info.get(
+                                "status", "unknown"
+                            )
+                        except:
+                            pass
 
                 status_summary = {
                     "project_id": project_id,
@@ -259,97 +100,10 @@ class ClaudeLMDBServer:
             except Exception as e:
                 return json.dumps({"error": f"Failed to get project status: {str(e)}"})
 
-        @self.app.tool()
-        async def mcp__lmdb__watch(prefix: str, timeout: int = 30) -> str:
-            """Watch for changes to keys with prefix (polling-based).
-
-            Args:
-                prefix: Key prefix to watch for changes
-                timeout: Maximum time to wait for changes in seconds
-
-            Returns:
-                JSON object with change information or timeout message
-
-            """
-            try:
-                self._ensure_db()
-
-                # Get initial state
-                initial_keys = {}
-                with self.env.begin(db=self.db) as txn:
-                    cursor = txn.cursor()
-                    start_key = prefix.encode()
-                    if cursor.set_range(start_key):
-                        for key, value in cursor:
-                            key_str = key.decode()
-                            if not key_str.startswith(prefix):
-                                break
-                            initial_keys[key_str] = value.decode()
-
-                # Poll for changes
-                import time
-
-                start_time = time.time()
-                poll_interval = 0.5  # 500ms polling interval
-
-                while time.time() - start_time < timeout:
-                    await asyncio.sleep(poll_interval)
-
-                    current_keys = {}
-                    with self.env.begin(db=self.db) as txn:
-                        cursor = txn.cursor()
-                        start_key = prefix.encode()
-                        if cursor.set_range(start_key):
-                            for key, value in cursor:
-                                key_str = key.decode()
-                                if not key_str.startswith(prefix):
-                                    break
-                                current_keys[key_str] = value.decode()
-
-                    # Check for changes
-                    added = set(current_keys.keys()) - set(initial_keys.keys())
-                    removed = set(initial_keys.keys()) - set(current_keys.keys())
-                    modified = {
-                        k
-                        for k in current_keys.keys()
-                        if k in initial_keys and current_keys[k] != initial_keys[k]
-                    }
-
-                    if added or removed or modified:
-                        return json.dumps(
-                            {
-                                "change_detected": True,
-                                "added": list(added),
-                                "removed": list(removed),
-                                "modified": list(modified),
-                                "timestamp": time.time(),
-                            }
-                        )
-
-                # Timeout reached
-                return json.dumps(
-                    {
-                        "change_detected": False,
-                        "message": f"No changes detected within {timeout} seconds",
-                        "timeout": True,
-                    }
-                )
-
-            except Exception as e:
-                return json.dumps(
-                    {"error": f"Failed to watch prefix '{prefix}': {str(e)}"}
-                )
-
     async def run(self) -> None:
         """Run the MCP server with stdio transport for Claude Code."""
         # Use stdio transport for Claude Code integration
-        await self.app.run(transport="stdio")
-
-    def close(self) -> None:
-        """Close the database."""
-        if self.env:
-            self.env.close()
-            self.env = None
+        await super().run(transport="stdio")
 
 
 def main() -> None:
